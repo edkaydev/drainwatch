@@ -21,8 +21,10 @@ sanitised incident data plus explainable hotspot scores.
 - Live incident overview, trend charts, status and severity breakdowns.
 - Searchable/filterable incident register with CSV export.
 - Incident detail with photos, reporter contact details, AI advisory review,
-  status transitions, and an attributed audit trail.
-- Hotspot priority list and scoped CSV exports.
+  status transitions, an attributed audit trail, and keyless Google Maps
+  handoff/directions links.
+- Hotspot priority list, on-demand Gemini operations briefing, and scoped CSV
+  exports.
 - Account and deployment status page.
 
 ## Stack
@@ -32,8 +34,28 @@ sanitised incident data plus explainable hotspot scores.
 - React `19.3`, TypeScript, Tailwind CSS v4.
 - Firebase Auth, Firestore, and Storage through the browser SDK.
 - MapLibre GL with OpenFreeMap Liberty by default.
-- Gemini `gemini-2.5-flash` through a server-only route handler.
+- Google Maps URLs for field navigation (keyless deep links, not a replacement
+  basemap).
+- Gemini `gemini-2.5-flash` through server-only route handlers.
 - Lucide icons.
+
+## Google technology integrations
+
+| Service | Working role | Status |
+|---|---|---|
+| Gemini API | Structured incident classification and on-demand hotspot operations briefings with strict schemas, server-side validation, timeouts, and deterministic fallbacks. | Implemented and unit-tested; a live model call needs `GOOGLE_GENERATIVE_AI_API_KEY`. |
+| Firebase Authentication | Email/password staff sign-in and password reset. | Implemented; live verification needs a Firebase project and staff user. |
+| Cloud Firestore | Private incident persistence, live staff subscriptions, sanitized public projections, status history, and staff audit trail. | Implemented with least-privilege rules; rules deployment and live reads are unverified here. |
+| Firebase Storage | One public cover photo for anonymous reports; authenticated evidence photos. | Implemented with content, size, filename, and incident-ID checks. Cloud Storage requires Blaze billing. |
+| Google Maps URLs | Keyless “Google Maps” and “Directions” handoff from incident and hotspot views. | Implemented and unit-tested. No Maps JavaScript API key or per-load billing. |
+
+We deliberately did **not** migrate the basemap to the Google Maps JavaScript API
+or move hosting to Cloud Run. MapLibre/OpenFreeMap keeps the public map keyless
+and avoids per-load billing, while Google Maps URLs cover the field-navigation
+need. Cloud Run would add container, Artifact Registry, and billing setup without
+improving this demonstration. Both decisions should be revisited only if a pilot
+partner requires Google basemap styling, traffic data, or a Google Cloud
+deployment boundary.
 
 ## Quick start
 
@@ -151,12 +173,27 @@ exports the components separately so a supervisor can audit the ranking. The
 "concentration" name in code refers to active report density within the cell, not
 a geographic clustering algorithm.
 
+The ranking is tested against a count-only baseline in
+`tests/hotspots-baseline.test.ts`. In that fixture, a cell with five low-severity
+reports ranks first by raw count (score 53), but a cell with four critical
+reports ranks first by weighted score (66). This is intentional: volume alone
+can hide severity. It is still a triage heuristic, not a flood forecast.
+
 ## AI behavior
 
 `/api/classify` sends the report text to Gemini with a strict response schema,
 a 12-second timeout, server-side validation, basic in-memory rate limiting, and
 a deterministic fallback. AI output is advisory: staff must explicitly apply or
 dismiss a suggestion, and the decision is recorded in the audit trail.
+
+`/api/briefing` accepts at most six hotspot summaries: cell id, public label,
+score, report counts, top category, and days since the newest report. It never
+sends reporter details, report descriptions, or photo URLs. The route uses a
+strict schema, a 12-second timeout, server-side validation of every hotspot id
+and text field, a deterministic rule-based fallback, and its own in-memory rate
+limit. The dashboard generates a briefing only when staff click the button, and
+labels it as an advisory draft. The deterministic score remains the ranking
+source; Gemini explains the ranking and suggests verification steps.
 
 ## Security and privacy
 
@@ -174,6 +211,11 @@ dismiss a suggestion, and the decision is recorded in the audit trail.
   abused within the file-size limits because Storage rules cannot count uploads
   per user. Add App Check or a server-side upload broker before high-traffic
   production use.
+- `/api/classify` and `/api/briefing` are public route handlers because the app
+  does not ship a Firebase Admin SDK for server-side token verification. Both
+  validate input and rate-limit per instance, and the briefing accepts only
+  public hotspot fields. Add App Check or a signed-in server proxy before relying
+  on them at scale.
 - Next.js sends `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
   `Permissions-Policy`, HSTS, and COOP headers, and hides `X-Powered-By`. A
   strict Content-Security-Policy is still a follow-up because it needs tuning
@@ -190,8 +232,9 @@ authorized domains, and follow the smoke test in `DEPLOYMENT.md`.
 
 ## Current limitations
 
-- Unit and route tests cover the classifier, validation, hotspot scoring, stats,
-  CSV escaping, status graph, and `/api/classify`. There is no browser E2E suite
+- Unit and route tests cover the classifier, validation, hotspot scoring and its
+  count-only baseline, stats, CSV escaping, status graph, Google Maps URL
+  helpers, `/api/classify`, and `/api/briefing`. There is no browser E2E suite
   yet.
 - AI route rate limiting is per-instance and in-memory, and it trusts
   `x-forwarded-for`. Use a shared store and a trusted proxy in production.
@@ -201,5 +244,7 @@ authorized domains, and follow the smoke test in `DEPLOYMENT.md`.
   aggregation before city-wide scale.
 - Hotspot scores are a heuristic triage aid, not a hydrological or flood
   prediction model.
+- Google Maps integration is limited to keyless Maps URLs for handoff and
+  directions; the basemap remains MapLibre/OpenFreeMap.
 - Map tiles depend on OpenFreeMap unless a style URL is provided.
 - `firebase-tools` is required only for deploying rules, not at runtime.
