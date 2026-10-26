@@ -88,7 +88,7 @@ export function HotspotsView() {
       <PageHeader
         eyebrow="Intelligence"
         title="Hotspots"
-        description="Locations grouped into ~110 m cells and ranked by recurrence, severity, recency, and concentration."
+        description="Locations grouped into ~110 m cells and ranked by recurrence, severity, recency, and active report density."
         actions={
           <>
             <Button
@@ -206,7 +206,7 @@ export function HotspotsView() {
           title={hotspots.length === 0 ? "No hotspots yet" : "No hotspots match these filters"}
           description={
             hotspots.length === 0
-              ? "Hotspots appear when two or more reports share a location, or when a single report is severe and recent."
+              ? "Every ~110 m cell with at least one report becomes a hotspot. Repeated, severe, or recent reports rank highest."
               : "Lower the minimum score or clear the division filter."
           }
           action={
@@ -272,6 +272,49 @@ export function HotspotsView() {
                   </div>
                 </dl>
 
+                <dl
+                  className="mt-3 grid grid-cols-4 gap-2 text-center"
+                  aria-label="Score breakdown"
+                >
+                  {[
+                    {
+                      label: "Recur.",
+                      value: hotspot.scoreBreakdown.recurrence,
+                      max: 40,
+                    },
+                    {
+                      label: "Severity",
+                      value: hotspot.scoreBreakdown.severity,
+                      max: 30,
+                    },
+                    {
+                      label: "Recency",
+                      value: hotspot.scoreBreakdown.recency,
+                      max: 20,
+                    },
+                    {
+                      label: "Active",
+                      value: hotspot.scoreBreakdown.concentration,
+                      max: 10,
+                    },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg bg-white/70 px-1.5 py-1.5">
+                      <dt className="text-[9px] uppercase tracking-wide text-ink-400">
+                        {item.label}
+                      </dt>
+                      <dd className="mt-0.5 text-xs font-semibold text-ink-700">
+                        {Math.round(item.value)}/{item.max}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                {hotspot.scoreBreakdown.resolvedPenalty < 1 ? (
+                  <p className="mt-2 text-[11px] text-ink-400">
+                    All reports resolved: score multiplied by{" "}
+                    {hotspot.scoreBreakdown.resolvedPenalty}.
+                  </p>
+                ) : null}
+
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {(["critical", "high", "medium", "low"] as Severity[])
                     .filter((severity) => hotspot.severityCounts[severity] > 0)
@@ -323,10 +366,10 @@ export function HotspotsView() {
         </p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Recurrence", weight: "40 points", detail: "Number of reports in the cell, capped at 12." },
-            { label: "Severity", weight: "30 points", detail: "Critical and high reports carry the most weight." },
-            { label: "Recency", weight: "20 points", detail: "Newer reports score higher, decaying over 180 days." },
-            { label: "Concentration", weight: "10 points", detail: "More active reports in the same cell score higher." },
+            { label: "Recurrence", weight: "40 points", detail: "Number of reports in the cell, capped at 12. Resolved reports count at 25%." },
+            { label: "Severity", weight: "30 points", detail: "Severity-weighted report volume, capped at 24 points. Critical reports carry the most weight." },
+            { label: "Recency", weight: "20 points", detail: "How recently the newest report arrived, decaying over 180 days." },
+            { label: "Active density", weight: "10 points", detail: "Number of active (unresolved) reports in the same ~110 m cell." },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-ink-100 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">

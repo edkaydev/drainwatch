@@ -35,7 +35,7 @@ import {
 } from "@/lib/incidents";
 import {
   CATEGORY_LABELS,
-  INCIDENT_STATUSES,
+  nextStatuses,
   SEVERITY_LABELS,
   STATUS_LABELS,
   URGENCY_LABELS,
@@ -110,7 +110,7 @@ export function IncidentDetailView() {
   const activeIncident = incident;
   const staffName = user?.displayName?.trim() || user?.email || "Staff member";
   const staff = user ? { uid: user.uid, name: staffName } : null;
-  const availableStatuses = INCIDENT_STATUSES.filter((status) => status !== incident.status);
+  const availableStatuses = nextStatuses(incident.status);
   const requiresNote = nextStatus === "resolved";
 
   async function handleStatusUpdate() {
@@ -494,7 +494,8 @@ export function IncidentDetailView() {
           <Card className="p-5">
             <h2 className="font-semibold text-teal-900">Update status</h2>
             <p className="mt-0.5 text-xs text-ink-400">
-              Triage, dispatch, and resolve this incident.
+              Triage, dispatch, and resolve this incident. The workflow moves one
+              stage at a time; resolved reports can be reopened.
             </p>
 
             <div className="mt-4 space-y-4">
