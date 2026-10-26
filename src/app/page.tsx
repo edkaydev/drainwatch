@@ -20,7 +20,7 @@ const FEATURES = [
   {
     icon: LineChart,
     title: "Get Insights",
-    description: "Discover hotspots and trends with AI.",
+    description: "Discover recurring hotspots and response trends.",
   },
   {
     icon: ShieldCheck,
@@ -36,9 +36,9 @@ const FEATURES = [
 
 const SCORE_FACTORS = [
   "Recurrence — how often a location reappears in reports",
-  "Severity — the highest severity reported at that location",
+  "Severity — severity-weighted report volume at that location",
   "Recency — newer reports weigh more than old ones",
-  "Concentration — how tightly reports cluster geographically",
+  "Active density — unresolved reports in the same ~110 m cell",
 ];
 
 const LEGEND = [
@@ -121,7 +121,7 @@ export default function Home() {
             <p className="mt-4 text-ink-600">
               DrainWatch AI turns scattered incident reports into an
               explainable hotspot score based on recurrence, severity,
-              recency, and geographic concentration — helping authorities
+              recency, and active report density — helping authorities
               focus limited resources where they matter most.
             </p>
             <ul className="mt-8 space-y-3">
