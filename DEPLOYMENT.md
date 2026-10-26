@@ -95,12 +95,23 @@ classifier and the UI labels it as a rule-based suggestion.
 ```bash
 npm ci
 npm run lint
-npx tsc --noEmit
+npm run typecheck
+npm test
 npm run build
 npm start
 ```
 
 Then open `http://localhost:3000` and verify the smoke test below.
+
+With Firebase configured and a staff test account in `.env.local`, run:
+
+```bash
+npm run verify:firebase
+```
+
+This read-only check signs in, confirms the `staff/{uid}` allow-list is active,
+and verifies staff and public Firestore reads. It never writes data or prints
+tokens.
 
 ## 5. Vercel deployment
 
@@ -123,10 +134,12 @@ vercel --prod
 
 - [ ] Landing page loads; photography is served as optimized JPEG/WebP.
 - [ ] `/report` submits without a staff login.
-- [ ] Photo upload succeeds; the first compressed image appears under
-      `public-incident-photos/` and any extra images under `incident-photos/`.
+- [ ] Anonymous submission uploads one compressed cover photo to
+      `public-incident-photos/`.
+- [ ] A signed-in reporter can add up to three photos; extra images go to
+      `incident-photos/` and require auth to upload and read.
 - [ ] Both `incidents/{id}` and `publicIncidents/{id}` are created.
-- [ ] Anonymous visitors can read the first photo but not the extra evidence
+- [ ] Anonymous visitors can read the cover photo but not the extra evidence
       photos.
 - [ ] The public map shows the report and the hotspot list updates.
 - [ ] Reporter contact details are absent from `publicIncidents`.
@@ -134,9 +147,13 @@ vercel --prod
       safe error.
 - [ ] A signed-in account without `staff/{uid}` sees the access gate.
 - [ ] `/dashboard` redirects anonymous visitors to `/login`.
-- [ ] Staff can search/filter incidents, apply or dismiss AI, change status, and
-      resolve with a note.
+- [ ] Staff can search/filter incidents, apply or dismiss AI, move status one
+      stage at a time, and resolve with a note of at least five characters.
+- [ ] Skipping a stage or moving backwards is rejected by the dashboard.
 - [ ] Status changes appear on the public map and in the detail audit trail.
+- [ ] Response headers include `X-Content-Type-Options`, `X-Frame-Options`,
+      `Referrer-Policy`, `Permissions-Policy`, HSTS, and `X-Powered-By` is
+      absent.
 - [ ] CSV exports download and contain the expected scope.
 - [ ] `/map?incident=<id>` and `/map?hotspot=<id>` focus correctly.
 - [ ] `/sitemap.xml` and `/robots.txt` use the production URL.
