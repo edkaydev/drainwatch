@@ -86,6 +86,9 @@ See `.env.example` for the complete list.
 | `GEMINI_MODEL` | Server only | Optional model override. |
 | `NEXT_PUBLIC_SITE_URL` | Browser/build | Canonical URL for metadata, robots, and sitemap. |
 | `NEXT_PUBLIC_MAP_STYLE_URL` | Browser | Optional MapLibre style override. |
+| `DRAINWATCH_STAFF_EMAIL` | Local script only | Staff test account for `verify:firebase`. |
+| `DRAINWATCH_STAFF_PASSWORD` | Local script only | Password for the test account. |
+| `DRAINWATCH_APP_URL` | Local script only | Optional app origin for the classify-route check. |
 
 Without a Gemini key, the app deterministically classifies reports locally and
 labels the result as a fallback. Without a map style override, OpenFreeMap
@@ -94,12 +97,18 @@ Liberty is used.
 ## Scripts
 
 ```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm start        # Start the production build
-npm run lint     # ESLint
-npx tsc --noEmit # TypeScript check
+npm run dev            # Development server
+npm run build          # Production build
+npm start              # Start the production build
+npm run lint           # ESLint
+npm run typecheck      # next typegen + tsc --noEmit
+npm test               # Vitest unit and route tests
+npm run verify:firebase # Read-only Firebase smoke test (needs staff test account)
 ```
+
+`npm run typecheck` runs `next typegen` first because the generated route types
+are required by `tsc` on a fresh clone. Running `npx tsc --noEmit` alone will
+fail until typegen has run once.
 
 ## Data model
 
@@ -111,12 +120,36 @@ npx tsc --noEmit # TypeScript check
   category, severity, title, status, location, optional first photo, and
   timestamps. Publicly readable.
 - `public-incident-photos/{incidentId}/{file}`: the public cover photo. Publicly
-  readable; creations are type/size limited by Storage rules.
-- `incident-photos/{incidentId}/{file}`: additional evidence photos. Readable
-  only by signed-in staff.
+  readable and writable by anonymous reporters, with content-type, size,
+  filename, and incident-ID validation in Storage rules.
+- `incident-photos/{incidentId}/{file}`: additional evidence photos. Uploads and
+  reads require a signed-in user, so anonymous reporters attach one cover photo
+  and signed-in reporters can attach up to three.
 
-Statuses flow through `new → triaged → in_progress → resolved`. Every status or
-AI-review action appends an attributed entry to `statusHistory`.
+Statuses flow linearly through `new → triaged → in_progress → resolved`, and a
+resolved incident can be reopened to `in_progress`. Both the dashboard and the
+Firestore rules reject skipped stages and backwards moves. Resolving requires a
+note of at least five characters. Every status or AI-review action appends an
+attributed entry to `statusHistory`.
+
+## Hotspot scoring
+
+Reports are grouped into roughly 110 m grid cells (three decimal places). Every
+cell with at least one valid report becomes a hotspot; the score is a transparent
+triage aid, not a flood prediction. Scores are capped at 100:
+
+| Component | Max | How it is calculated |
+|---|---:|---|
+| Recurrence | 40 | Report volume in the cell, capped at 12. Resolved reports count at 25%. |
+| Severity | 30 | Severity-weighted volume, capped at 24 points. Low 1, medium 2, high 4, critical 5; resolved reports count at 25%. |
+| Recency | 20 | Freshness of the newest report, decaying linearly over 180 days. |
+| Active density | 10 | Number of active (unresolved) reports in the cell, capped at 5. |
+| Resolved-only penalty | ×0.35 | Applied when every report in the cell is resolved. |
+
+The dashboard shows each component next to the total, and the hotspot CSV
+exports the components separately so a supervisor can audit the ranking. The
+"concentration" name in code refers to active report density within the cell, not
+a geographic clustering algorithm.
 
 ## AI behavior
 
@@ -131,12 +164,20 @@ dismiss a suggestion, and the decision is recorded in the audit trail.
   `publicIncidents`.
 - Dashboard reads and writes require a signed-in user with an active
   `staff/{uid}` allow-list document.
-- Firestore rules validate report shape, location bounds, allowed fields,
-  status transitions, public projections, and status history.
-- Storage rules restrict uploads to JPEG/PNG/WebP files up to 5 MB. Only the
-  first photo is published; additional evidence photos require staff auth.
-- Public reporting is intentionally unauthenticated. Storage upload abuse is
-  limited by file validation but not by application-level rate limiting.
+- Firestore rules validate report shape, location bounds, allowed fields, the
+  allowed status-transition graph, resolution notes, public projections, and
+  status history.
+- Storage rules restrict uploads to JPEG/PNG/WebP files up to 5 MB and validate
+  filenames and incident IDs. Only the anonymous cover-photo path is publicly
+  writable; additional evidence photos require authentication.
+- Public reporting is intentionally unauthenticated. The cover-photo path can be
+  abused within the file-size limits because Storage rules cannot count uploads
+  per user. Add App Check or a server-side upload broker before high-traffic
+  production use.
+- Next.js sends `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+  `Permissions-Policy`, HSTS, and COOP headers, and hides `X-Powered-By`. A
+  strict Content-Security-Policy is still a follow-up because it needs tuning
+  for MapLibre, OpenFreeMap, Firebase, and Gemini.
 - Email/password sign-up can still be called through Firebase's public Identity
   Toolkit API even when the app has no sign-up form. The `staff` allow-list is
   therefore part of the security boundary, not just a UI convenience.
@@ -149,10 +190,16 @@ authorized domains, and follow the smoke test in `DEPLOYMENT.md`.
 
 ## Current limitations
 
-- No automated end-to-end test suite yet; production build, ESLint, and
-  TypeScript checks pass.
-- AI route rate limiting is per-instance and in-memory. Use a shared store for
-  multi-instance production traffic.
-- Public photo uploads have no user-level quota.
+- Unit and route tests cover the classifier, validation, hotspot scoring, stats,
+  CSV escaping, status graph, and `/api/classify`. There is no browser E2E suite
+  yet.
+- AI route rate limiting is per-instance and in-memory, and it trusts
+  `x-forwarded-for`. Use a shared store and a trusted proxy in production.
+- Public cover-photo uploads have no per-user quota; see the security note above.
+- Dashboard and public map subscriptions load at most 500 and 1,000 documents
+  respectively and compute hotspots client-side. Move scoring to a scheduled
+  aggregation before city-wide scale.
+- Hotspot scores are a heuristic triage aid, not a hydrological or flood
+  prediction model.
 - Map tiles depend on OpenFreeMap unless a style URL is provided.
 - `firebase-tools` is required only for deploying rules, not at runtime.
