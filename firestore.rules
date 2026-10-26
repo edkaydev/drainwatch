@@ -1,0 +1,252 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isStaff() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+        && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.active != false;
+    }
+
+    function validCategory(value) {
+      return value in [
+        'blocked_drain',
+        'open_manhole',
+        'flooding',
+        'illegal_dumping',
+        'erosion',
+        'broken_culvert',
+        'other'
+      ];
+    }
+
+    function validSeverity(value) {
+      return value in ['low', 'medium', 'high', 'critical'];
+    }
+
+    function validStatus(value) {
+      return value in ['new', 'triaged', 'in_progress', 'resolved'];
+    }
+
+    function validLocation(location) {
+      return location is map
+        && location.keys().hasAll(['lat', 'lng'])
+        && location.keys().hasOnly(['lat', 'lng', 'address', 'division'])
+        && location.lat is number
+        && location.lat >= 0.1
+        && location.lat <= 0.65
+        && location.lng is number
+        && location.lng >= 32.3
+        && location.lng <= 32.85
+        && (!location.keys().hasAny(['address']) || (location.address is string && location.address.size() <= 200))
+        && (!location.keys().hasAny(['division']) || (location.division is string && location.division.size() <= 80));
+    }
+
+    function validReporter(reporter) {
+      return reporter is map
+        && reporter.keys().hasOnly(['name', 'phone', 'email'])
+        && (!reporter.keys().hasAny(['name']) || (reporter.name is string && reporter.name.size() <= 80))
+        && (!reporter.keys().hasAny(['phone']) || (reporter.phone is string && reporter.phone.size() <= 30))
+        && (!reporter.keys().hasAny(['email']) || (reporter.email is string && reporter.email.size() <= 120));
+    }
+
+    function validAI(ai, requireReviewFields) {
+      return ai is map
+        && ai.keys().hasAll(['category', 'severity', 'urgency', 'summary', 'confidence', 'source', 'reviewed'])
+        && ai.keys().hasOnly(['category', 'severity', 'urgency', 'summary', 'confidence', 'source', 'reviewed', 'reviewedBy', 'reviewedAt'])
+        && validCategory(ai.category)
+        && validSeverity(ai.severity)
+        && ai.urgency in ['low', 'normal', 'high', 'immediate']
+        && ai.summary is string
+        && ai.summary.size() > 0
+        && ai.summary.size() <= 280
+        && ai.confidence is number
+        && ai.confidence >= 0
+        && ai.confidence <= 1
+        && ai.source in ['gemini', 'fallback']
+        && ai.reviewed is bool
+        && (!requireReviewFields || !ai.reviewed || (ai.reviewedBy is string && ai.reviewedBy == request.auth.uid))
+        && (!ai.reviewed || (ai.keys().hasAny(['reviewedBy']) && ai.keys().hasAny(['reviewedAt']) && ai.reviewedAt is timestamp));
+    }
+
+    function validNewAI(ai) {
+      return validAI(ai, false)
+        && ai.reviewed == false
+        && !ai.keys().hasAny(['reviewedBy', 'reviewedAt']);
+    }
+
+    function validAIUpdate() {
+      return !request.resource.data.keys().hasAny(['ai'])
+        || (validAI(request.resource.data.ai, false)
+          && (request.resource.data.ai == resource.data.ai
+            || (request.resource.data.ai.reviewed == true
+              && request.resource.data.ai.reviewedBy == request.auth.uid)));
+    }
+
+    function validPhotoUrl(url) {
+      return url is string
+        && url.size() <= 2048
+        && url.matches('https://.*');
+    }
+
+    function validPhotoUrls(urls) {
+      return urls is list
+        && urls.size() <= 3
+        && (urls.size() < 1 || validPhotoUrl(urls[0]))
+        && (urls.size() < 2 || validPhotoUrl(urls[1]))
+        && (urls.size() < 3 || validPhotoUrl(urls[2]));
+    }
+
+    function validNewStatusHistory(history) {
+      return history is list
+        && history.size() == 1
+        && history[0] is map
+        && history[0].keys().hasAll(['status', 'at', 'by', 'byName'])
+        && history[0].keys().hasOnly(['status', 'at', 'by', 'byName', 'note'])
+        && history[0].status == 'new'
+        && history[0].at is timestamp
+        && history[0].byName is string
+        && history[0].byName.size() > 0
+        && history[0].byName.size() <= 80
+        && (history[0].by == null || (signedIn() && history[0].by == request.auth.uid))
+        && (!history[0].keys().hasAny(['note']) || (history[0].note is string && history[0].note.size() <= 500));
+    }
+
+    function validStatusHistoryEntry(entry, expectedStatus) {
+      return entry is map
+        && entry.keys().hasAll(['status', 'at', 'by', 'byName'])
+        && entry.keys().hasOnly(['status', 'at', 'by', 'byName', 'note'])
+        && validStatus(entry.status)
+        && entry.status == expectedStatus
+        && entry.at is timestamp
+        && entry.by == request.auth.uid
+        && entry.byName is string
+        && entry.byName.size() > 0
+        && entry.byName.size() <= 80
+        && (!entry.keys().hasAny(['note']) || (entry.note is string && entry.note.size() <= 500));
+    }
+
+    function validStatusHistoryUpdate(before, after, beforeStatus, afterStatus) {
+      return before is list
+        && after is list
+        && (afterStatus == beforeStatus || after.size() == before.size() + 1)
+        && (after.size() == before.size()
+          ? after == before
+          : validStatusHistoryEntry(after[after.size() - 1], afterStatus));
+    }
+
+    function validIncidentCreate() {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'category', 'severity', 'title', 'description', 'location', 'reporter',
+          'photoUrls', 'status', 'statusHistory', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'category', 'severity', 'title', 'description', 'location', 'reporter',
+          'photoUrls', 'status', 'statusHistory', 'createdAt', 'updatedAt', 'reportedBy', 'ai'
+        ])
+        && validCategory(data.category)
+        && validSeverity(data.severity)
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.description is string
+        && data.description.size() >= 20
+        && data.description.size() <= 1200
+        && validLocation(data.location)
+        && validReporter(data.reporter)
+        && validPhotoUrls(data.photoUrls)
+        && data.status == 'new'
+        && validNewStatusHistory(data.statusHistory)
+        && (!data.keys().hasAny(['reportedBy']) || (signedIn() && data.reportedBy is string && data.reportedBy == request.auth.uid))
+        && (!data.keys().hasAny(['ai']) || validNewAI(data.ai))
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function validPublicCreate(incidentId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'category', 'severity', 'title', 'status', 'location', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'category', 'severity', 'title', 'status', 'location', 'photoUrl',
+          'createdAt', 'updatedAt', 'resolvedAt'
+        ])
+        && validCategory(data.category)
+        && validSeverity(data.severity)
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.status == 'new'
+        && validLocation(data.location)
+        && (!data.keys().hasAny(['photoUrl']) || validPhotoUrl(data.photoUrl))
+        && !data.keys().hasAny(['resolvedAt'])
+        && data.createdAt == request.time
+        && data.updatedAt == request.time
+        && validPublicProjection(incidentId);
+    }
+
+    function validPublicProjection(incidentId) {
+      let incidentPath = /databases/$(database)/documents/incidents/$(incidentId);
+      let incident = getAfter(incidentPath).data;
+      let data = request.resource.data;
+      return existsAfter(incidentPath)
+        && incident.category == data.category
+        && incident.severity == data.severity
+        && incident.title == data.title
+        && incident.status == data.status
+        && incident.location == data.location
+        && (!data.keys().hasAny(['photoUrl'])
+          || (incident.photoUrls is list
+            && incident.photoUrls.size() > 0
+            && incident.photoUrls[0] == data.photoUrl));
+    }
+
+    match /staff/{staffId} {
+      allow read: if signedIn() && request.auth.uid == staffId;
+      allow write: if false;
+    }
+
+    match /incidents/{incidentId} {
+      allow read: if isStaff();
+      allow create: if validIncidentCreate();
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'category', 'severity', 'status', 'statusHistory', 'updatedAt',
+          'resolvedAt', 'ai'
+        ])
+        && validCategory(request.resource.data.category)
+        && validSeverity(request.resource.data.severity)
+        && validStatus(request.resource.data.status)
+        && validStatusHistoryUpdate(resource.data.statusHistory, request.resource.data.statusHistory, resource.data.status, request.resource.data.status)
+        && validAIUpdate()
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.status == 'resolved'
+          ? request.resource.data.resolvedAt == request.time
+          : request.resource.data.resolvedAt == null);
+      allow delete: if false;
+    }
+
+    match /publicIncidents/{incidentId} {
+      allow read: if true;
+      allow create: if validPublicCreate(incidentId);
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'category', 'severity', 'status', 'updatedAt', 'resolvedAt'
+        ])
+        && validCategory(request.resource.data.category)
+        && validSeverity(request.resource.data.severity)
+        && validStatus(request.resource.data.status)
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.status == 'resolved'
+          ? request.resource.data.resolvedAt == request.time
+          : request.resource.data.resolvedAt == null);
+      allow delete: if false;
+    }
+  }
+}
