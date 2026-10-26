@@ -206,11 +206,14 @@ export function ReportForm() {
   function addPhotos(files: FileList | File[]) {
     const incoming = Array.from(files);
     const next = [...photos];
+    const photoLimit = user ? MAX_PHOTOS : 1;
     let message: string | null = null;
 
     for (const file of incoming) {
-      if (next.length >= MAX_PHOTOS) {
-        message = `You can attach up to ${MAX_PHOTOS} photos.`;
+      if (next.length >= photoLimit) {
+        message = user
+          ? `You can attach up to ${MAX_PHOTOS} photos.`
+          : "Anonymous reports include one cover photo. Sign in to attach more.";
         break;
       }
 
@@ -321,7 +324,12 @@ export function ReportForm() {
           `Uploading photo ${index + 1} of ${photos.length}…`,
         );
         const compressed = await compressPhoto(photo.file);
-        const url = await uploadIncidentPhoto(incidentId, compressed, index);
+        const url = await uploadIncidentPhoto(
+          incidentId,
+          compressed,
+          index,
+          Boolean(user),
+        );
         photoUrls.push(url);
       }
 
@@ -414,6 +422,7 @@ export function ReportForm() {
                 errors={errors}
                 photoMessage={photoMessage}
                 photos={photos}
+                photoLimit={user ? MAX_PHOTOS : 1}
                 disabled={submitting}
                 onDraftChange={updateDraft}
                 onAddPhotos={addPhotos}
@@ -617,6 +626,7 @@ function DetailsStep({
   errors,
   photos,
   photoMessage,
+  photoLimit,
   disabled,
   onDraftChange,
   onAddPhotos,
@@ -626,6 +636,7 @@ function DetailsStep({
   errors: ReportErrors;
   photos: PhotoItem[];
   photoMessage: string | null;
+  photoLimit: number;
   disabled: boolean;
   onDraftChange: <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => void;
   onAddPhotos: (files: FileList | File[]) => void;
@@ -779,6 +790,7 @@ function DetailsStep({
             onRemove={onRemovePhoto}
             error={photoMessage ?? undefined}
             disabled={disabled}
+            maxPhotos={photoLimit}
           />
         </div>
       </div>
