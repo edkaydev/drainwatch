@@ -83,6 +83,7 @@ export function computeHotspots(
     const rawScore =
       recurrenceScore + severityScore + recencyScore + concentrationScore;
     const resolvedPenalty = active.length === 0 ? 0.35 : 1;
+    const total = Math.round(Math.min(100, rawScore * resolvedPenalty));
 
     const severityCounts: Record<Severity, number> = {
       low: 0,
@@ -108,7 +109,16 @@ export function computeHotspots(
       count: group.length,
       activeCount: active.length,
       resolvedCount: resolved,
-      score: Math.round(Math.min(100, rawScore * resolvedPenalty)),
+      score: total,
+      scoreBreakdown: {
+        recurrence: recurrenceScore,
+        severity: severityScore,
+        recency: recencyScore,
+        concentration: concentrationScore,
+        subtotal: rawScore,
+        resolvedPenalty,
+        total,
+      },
       severityCounts,
       categoryCounts,
       lastReportedAt: newest.createdAt,

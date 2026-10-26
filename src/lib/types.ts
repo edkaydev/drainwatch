@@ -63,6 +63,29 @@ export const STATUS_RANK: Record<IncidentStatus, number> = {
   resolved: 3,
 };
 
+/**
+ * Allowed workflow transitions. The happy path is linear, and a resolved
+ * incident can be reopened if the hazard returns. Skipping stages or moving
+ * backwards is rejected by both the UI and the Firestore rules.
+ */
+export const STATUS_TRANSITIONS: Record<IncidentStatus, readonly IncidentStatus[]> = {
+  new: ["triaged"],
+  triaged: ["in_progress"],
+  in_progress: ["resolved"],
+  resolved: ["in_progress"],
+};
+
+export function canTransitionStatus(
+  from: IncidentStatus,
+  to: IncidentStatus,
+): boolean {
+  return STATUS_TRANSITIONS[from].includes(to);
+}
+
+export function nextStatuses(from: IncidentStatus): IncidentStatus[] {
+  return [...STATUS_TRANSITIONS[from]];
+}
+
 export const KAMPALA_CENTER = { lat: 0.3476, lng: 32.5825 };
 
 export const KAMPALA_DIVISIONS = [
@@ -138,6 +161,21 @@ export type PublicIncident = {
   resolvedAt?: Date;
 };
 
+export type HotspotScoreBreakdown = {
+  /** Report volume, including resolved reports at a reduced weight. Max 40. */
+  recurrence: number;
+  /** Severity-weighted report volume. Max 30. */
+  severity: number;
+  /** Freshness of the newest report, decaying over 180 days. Max 20. */
+  recency: number;
+  /** Active report volume in the same cell. Max 10. */
+  concentration: number;
+  subtotal: number;
+  /** 0.35 when every report in the cell is resolved, otherwise 1. */
+  resolvedPenalty: number;
+  total: number;
+};
+
 export type Hotspot = {
   id: string;
   lat: number;
@@ -148,6 +186,7 @@ export type Hotspot = {
   activeCount: number;
   resolvedCount: number;
   score: number;
+  scoreBreakdown: HotspotScoreBreakdown;
   severityCounts: Record<Severity, number>;
   categoryCounts: Partial<Record<IncidentCategory, number>>;
   lastReportedAt: Date;
