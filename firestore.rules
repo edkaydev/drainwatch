@@ -32,6 +32,25 @@ service cloud.firestore {
       return value in ['new', 'triaged', 'in_progress', 'resolved'];
     }
 
+    // Keep the workflow linear. A resolved incident may be reopened, but
+    // stages cannot be skipped and incidents cannot move backwards otherwise.
+    function validTransition(before, after) {
+      return before == after
+        || (before == 'new' && after == 'triaged')
+        || (before == 'triaged' && after == 'in_progress')
+        || (before == 'in_progress' && after == 'resolved')
+        || (before == 'resolved' && after == 'in_progress');
+    }
+
+    function hasResolutionNote(before, after) {
+      let history = after.statusHistory;
+      return history is list
+        && history.size() == before.statusHistory.size() + 1
+        && history[history.size() - 1].keys().hasAny(['note'])
+        && history[history.size() - 1].note is string
+        && history[history.size() - 1].note.size() >= 5;
+    }
+
     function validLocation(location) {
       return location is map
         && location.keys().hasAll(['lat', 'lng'])
@@ -223,6 +242,10 @@ service cloud.firestore {
         && validCategory(request.resource.data.category)
         && validSeverity(request.resource.data.severity)
         && validStatus(request.resource.data.status)
+        && validTransition(resource.data.status, request.resource.data.status)
+        && (request.resource.data.status != 'resolved'
+          || resource.data.status == 'resolved'
+          || hasResolutionNote(resource.data, request.resource.data))
         && validStatusHistoryUpdate(resource.data.statusHistory, request.resource.data.statusHistory, resource.data.status, request.resource.data.status)
         && validAIUpdate()
         && request.resource.data.updatedAt == request.time
@@ -242,6 +265,7 @@ service cloud.firestore {
         && validCategory(request.resource.data.category)
         && validSeverity(request.resource.data.severity)
         && validStatus(request.resource.data.status)
+        && validTransition(resource.data.status, request.resource.data.status)
         && request.resource.data.updatedAt == request.time
         && (request.resource.data.status == 'resolved'
           ? request.resource.data.resolvedAt == request.time
