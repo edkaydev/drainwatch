@@ -607,6 +607,24 @@ export function PublicHotspotMap() {
                 {selectedHotspot.activeCount} active ·{" "}
                 {selectedHotspot.resolvedCount} resolved
               </p>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                {[
+                  { label: "Recurrence", value: selectedHotspot.scoreBreakdown.recurrence, max: 40 },
+                  { label: "Severity", value: selectedHotspot.scoreBreakdown.severity, max: 30 },
+                  { label: "Recency", value: selectedHotspot.scoreBreakdown.recency, max: 20 },
+                  { label: "Active density", value: selectedHotspot.scoreBreakdown.concentration, max: 10 },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between rounded-lg bg-ink-50 px-2.5 py-1.5"
+                  >
+                    <dt className="text-ink-500">{item.label}</dt>
+                    <dd className="font-medium text-ink-800">
+                      {Math.round(item.value)}/{item.max}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </Card>
           ) : null}
 
@@ -615,7 +633,7 @@ export function PublicHotspotMap() {
               <div>
                 <h2 className="font-semibold text-teal-900">Priority hotspots</h2>
                 <p className="mt-0.5 text-xs text-ink-500">
-                  Ranked by recurrence, severity, recency, and concentration
+                  Ranked by recurrence, severity, recency, and active report density
                 </p>
               </div>
               <MapPinned className="h-4 w-4 text-brand-600" aria-hidden="true" />

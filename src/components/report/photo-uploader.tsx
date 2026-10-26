@@ -18,16 +18,18 @@ export function PhotoUploader({
   onRemove,
   error,
   disabled,
+  maxPhotos = MAX_PHOTOS,
 }: {
   photos: PhotoItem[];
   onAddFiles: (files: FileList | File[]) => void;
   onRemove: (id: string) => void;
   error?: string;
   disabled?: boolean;
+  maxPhotos?: number;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
-  const atLimit = photos.length >= MAX_PHOTOS;
+  const atLimit = photos.length >= maxPhotos;
   const blockAdd = Boolean(disabled) || atLimit;
 
   return (
@@ -71,8 +73,8 @@ export function PhotoUploader({
           {atLimit ? "Photo limit reached" : "Drop photos here, or browse"}
         </p>
         <p className="mt-1 text-xs text-ink-400">
-          Up to {MAX_PHOTOS} photos · JPEG, PNG, or WebP · max{" "}
-          {Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB each
+          Up to {maxPhotos} {maxPhotos === 1 ? "photo" : "photos"} · JPEG, PNG,
+          or WebP · max {Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB each
         </p>
         <button
           type="button"
