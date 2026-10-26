@@ -58,8 +58,9 @@ Files used:
 - `storage.rules`
 - `firebase.json`
 
-The Firestore rules compile locally/dry-run, but production deploy requires the
-Firestore database to exist. Storage rules require Storage to be enabled.
+The Firestore and Storage rules are not emulator-tested yet. The first deploy
+validates syntax against the existing database and bucket; use a staging project
+before production. Storage rules require Storage to be enabled.
 
 ## 2. Gemini
 
@@ -71,7 +72,13 @@ Firestore database to exist. Storage rules require Storage to be enabled.
 The key is server-only. Never prefix it with `NEXT_PUBLIC_`.
 
 If no key is present, `/api/classify` returns the deterministic fallback
-classifier and the UI labels it as a rule-based suggestion.
+classifier and the UI labels it as a rule-based suggestion. The same key enables
+`/api/briefing`; without it, the briefing card still works and labels the output
+as a rule-based draft.
+
+Google Maps handoff links do not use this key. They open `google.com/maps` with a
+coordinate and require no API activation, billing account, or Maps JavaScript API
+key.
 
 ## 3. Environment variables
 
@@ -149,6 +156,17 @@ vercel --prod
 - [ ] `/dashboard` redirects anonymous visitors to `/login`.
 - [ ] Staff can search/filter incidents, apply or dismiss AI, move status one
       stage at a time, and resolve with a note of at least five characters.
+- [ ] Incident detail and hotspot cards open the correct location in Google
+      Maps; the links work without a Google Maps API key.
+- [ ] On `/dashboard/hotspots`, **Generate briefing** returns either a Gemini
+      draft or a clearly labelled rule-based draft. The briefing must be
+      advisory and must not claim a crew was dispatched.
+- [ ] The briefing network request contains only hotspot id, label, score,
+      counts, top category, and days since the newest report. It must not
+      contain reporter names, phone numbers, emails, descriptions, or photo
+      URLs.
+- [ ] With no Gemini key, both AI routes return fallback output rather than an
+      error.
 - [ ] Skipping a stage or moving backwards is rejected by the dashboard.
 - [ ] Status changes appear on the public map and in the detail audit trail.
 - [ ] Response headers include `X-Content-Type-Options`, `X-Frame-Options`,
@@ -172,6 +190,9 @@ vercel --prod
   correct, and the project is on Blaze if required.
 - **Map is blank**: check browser network access to OpenFreeMap or set
   `NEXT_PUBLIC_MAP_STYLE_URL` to a reachable style.
-- **No AI key**: fallback classification is expected; either add the key or
-  document fallback-only behavior for the pilot.
+- **No AI key**: fallback classification and briefing are expected; either add
+  the key or document fallback-only behavior for the pilot.
+- **Briefing falls back with a key configured**: check the Gemini API key,
+  `GEMINI_MODEL`, billing/quota, and server logs. The route degrades to the
+  deterministic briefing instead of failing the dashboard.
 - **Metadata points at localhost**: set `NEXT_PUBLIC_SITE_URL` and rebuild.
