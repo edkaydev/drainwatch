@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "./page-header";
 import { StatCard } from "./stat-card";
+import { HotspotBriefing } from "./hotspot-briefing";
 import { Card } from "@/components/ui/card";
 import { Alert, EmptyState, LoadingBlock } from "@/components/ui/feedback";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -201,6 +202,8 @@ export function HotspotsView() {
           </p>
         </div>
       </Card>
+
+      <HotspotBriefing hotspots={filtered} />
 
       {filtered.length === 0 ? (
         <EmptyState
