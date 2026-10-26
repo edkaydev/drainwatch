@@ -17,6 +17,7 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { getDb, getFirebaseStorage } from "./firebase";
 import {
+  canTransitionStatus,
   CATEGORY_LABELS,
   isIncidentCategory,
   isIncidentStatus,
@@ -248,7 +249,12 @@ export async function uploadIncidentPhoto(
   incidentId: string,
   file: File,
   index: number,
+  allowPrivate = false,
 ): Promise<string> {
+  if (index > 0 && !allowPrivate) {
+    throw new Error("Sign in to attach more than one photo.");
+  }
+
   const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const folder = index === 0 ? "public-incident-photos" : "incident-photos";
   const storageRef = ref(
@@ -425,6 +431,16 @@ export async function updateIncidentStatus(
     const currentStatus = isIncidentStatus(data.status) ? data.status : "new";
     if (currentStatus === input.status) {
       throw new Error(`The incident is already marked as ${input.status.replace("_", " ")}.`);
+    }
+
+    if (!canTransitionStatus(currentStatus, input.status)) {
+      throw new Error(
+        `Cannot move an incident from ${currentStatus.replace("_", " ")} to ${input.status.replace("_", " ")}.`,
+      );
+    }
+
+    if (input.status === "resolved" && note.length < 5) {
+      throw new Error("Add a short note explaining how the issue was resolved.");
     }
 
     const history = Array.isArray(data.statusHistory)
