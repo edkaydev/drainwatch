@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowDownToLine,
   ArrowUpRight,
+  ExternalLink,
   MapPinned,
   MapPin,
   TrendingUp,
@@ -18,6 +19,7 @@ import { Select } from "@/components/ui/form";
 import { useIncidents } from "@/hooks/use-incidents";
 import { incidentToPublic } from "@/lib/incidents";
 import { computeHotspots, hotspotTone } from "@/lib/hotspots";
+import { googleMapsPlaceUrl } from "@/lib/maps-links";
 import { downloadCsv, hotspotsToCsv } from "@/lib/csv";
 import { CATEGORY_LABELS, SEVERITY_LABELS, type Severity } from "@/lib/types";
 import { formatNumber, formatRelativeTime } from "@/lib/format";
@@ -227,6 +229,7 @@ export function HotspotsView() {
         <div className="grid gap-4 lg:grid-cols-2">
           {filtered.map((hotspot) => {
             const tone = hotspotTone(hotspot.score);
+            const mapsUrl = googleMapsPlaceUrl(hotspot);
             const categoryEntry = Object.entries(hotspot.categoryCounts).sort(
               (a, b) => b[1] - a[1],
             )[0];
@@ -342,6 +345,17 @@ export function HotspotsView() {
                     >
                       Map <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </Link>
+                    {mapsUrl ? (
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 font-medium text-brand-700 hover:text-brand-800"
+                      >
+                        Google Maps
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    ) : null}
                     {hotspot.incidents[0] ? (
                       <Link
                         href={`/dashboard/incidents/${hotspot.incidents[0].id}`}

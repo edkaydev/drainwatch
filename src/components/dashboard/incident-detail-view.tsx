@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Mail,
   MapPin,
+  Navigation,
   Phone,
   ShieldCheck,
   Sparkles,
@@ -47,6 +48,10 @@ import {
   formatRelativeTime,
   formatPercent,
 } from "@/lib/format";
+import {
+  googleMapsDirectionsUrl,
+  googleMapsPlaceUrl,
+} from "@/lib/maps-links";
 import { cn } from "@/lib/utils";
 
 export function IncidentDetailView() {
@@ -112,6 +117,8 @@ export function IncidentDetailView() {
   const staff = user ? { uid: user.uid, name: staffName } : null;
   const availableStatuses = nextStatuses(incident.status);
   const requiresNote = nextStatus === "resolved";
+  const mapsUrl = googleMapsPlaceUrl(incident.location);
+  const directionsUrl = googleMapsDirectionsUrl(incident.location);
 
   async function handleStatusUpdate() {
     setStatusError(null);
@@ -264,6 +271,32 @@ export function IncidentDetailView() {
                   <span className="mt-1 block font-mono text-xs text-ink-500">
                     {formatCoordinates(incident.location.lat, incident.location.lng)}
                   </span>
+                  {mapsUrl || directionsUrl ? (
+                    <span className="mt-2 flex flex-wrap gap-3 text-xs font-medium">
+                      {mapsUrl ? (
+                        <a
+                          href={mapsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-brand-700 hover:text-brand-800"
+                        >
+                          Google Maps
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        </a>
+                      ) : null}
+                      {directionsUrl ? (
+                        <a
+                          href={directionsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-brand-700 hover:text-brand-800"
+                        >
+                          Directions
+                          <Navigation className="h-3 w-3" aria-hidden="true" />
+                        </a>
+                      ) : null}
+                    </span>
+                  ) : null}
                 </dd>
               </div>
 
