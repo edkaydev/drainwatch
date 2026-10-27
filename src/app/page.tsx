@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { SiteShell } from "@/components/layout/site-shell";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { LinkButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLanguage } from "@/components/layout/language-provider";
@@ -82,6 +83,8 @@ export default function Home() {
                 {t("home.hero.cta3")}
               </LinkButton>
             </div>
+
+            <PwaInstallBanner />
           </div>
 
           <div className="animate-fade-in-up [animation-delay:150ms]">

@@ -12,11 +12,14 @@ import {
   Copy,
   Crosshair,
   FileWarning,
+  ImagePlus,
   MapPin,
+  Mic,
   MessageCircle,
   Phone,
   ShieldCheck,
   Sparkles,
+  Type,
 } from "lucide-react";
 import { PhotoUploader, type PhotoItem } from "./photo-uploader";
 import { VoiceRecorder } from "./voice-recorder";
@@ -754,6 +757,10 @@ function CaptureStage({
   onTranscribed: (transcript: string) => void;
 }) {
   const { t, language } = useLanguage();
+  const [method, setMethod] = useState<CaptureMethod>(null);
+
+  const hasVoiceOrText = draft.description.trim().length > 0;
+  const hasPhoto = photos.length > 0;
 
   return (
     <div className="space-y-6">
@@ -765,54 +772,129 @@ function CaptureStage({
         <AudioGuide step="capture" language={language} />
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold text-ink-800">{t("report.fields.voice")}</h3>
-        <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.voiceHint")}</p>
-        <div className="mt-3">
-          <VoiceRecorder onTranscribed={onTranscribed} disabled={disabled} />
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-sm font-semibold text-ink-800">{t("report.fields.photos")}</h3>
-        <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.photosHint")}</p>
-        <div className="mt-3">
-          <PhotoUploader
-            photos={photos}
-            onAddFiles={onAddPhotos}
-            onRemove={onRemovePhoto}
-            error={photoMessage ?? undefined}
-            disabled={disabled}
-            maxPhotos={MAX_PHOTOS}
+      {method === null ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <CaptureMethodButton
+            icon={Mic}
+            label={t("report.capture.chooseVoice")}
+            done={hasVoiceOrText}
+            onClick={() => setMethod("voice")}
+          />
+          <CaptureMethodButton
+            icon={ImagePlus}
+            label={t("report.capture.choosePhoto")}
+            done={hasPhoto}
+            onClick={() => setMethod("photo")}
+          />
+          <CaptureMethodButton
+            icon={Type}
+            label={t("report.capture.chooseText")}
+            done={hasVoiceOrText}
+            onClick={() => setMethod("text")}
           />
         </div>
-      </div>
+      ) : (
+        <div>
+          <button
+            type="button"
+            onClick={() => setMethod(null)}
+            className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            {t("report.capture.chooseDifferent")}
+          </button>
 
-      <Field
-        label={t("report.fields.description")}
-        htmlFor="report-description"
-        hint={t("report.fields.descriptionHint", { min: DESCRIPTION_MIN })}
-        error={errors.description}
-      >
-        <Textarea
-          id="report-description"
-          value={draft.description}
-          onChange={(event) =>
-            onDraftChange("description", event.target.value.slice(0, DESCRIPTION_MAX))
-          }
-          placeholder={t("report.fields.descriptionPlaceholder")}
-          rows={5}
-          disabled={disabled}
-          aria-invalid={Boolean(errors.description)}
-          aria-describedby={
-            errors.description ? "report-description-error" : "report-description-hint"
-          }
-        />
-        <div className="mt-1 flex justify-end text-xs text-ink-400">
-          {draft.description.length}/{DESCRIPTION_MAX}
+          {method === "voice" ? (
+            <div>
+              <h3 className="text-sm font-semibold text-ink-800">{t("report.fields.voice")}</h3>
+              <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.voiceHint")}</p>
+              <div className="mt-3">
+                <VoiceRecorder onTranscribed={onTranscribed} disabled={disabled} />
+              </div>
+            </div>
+          ) : null}
+
+          {method === "photo" ? (
+            <div>
+              <h3 className="text-sm font-semibold text-ink-800">{t("report.fields.photos")}</h3>
+              <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.photosHint")}</p>
+              <div className="mt-3">
+                <PhotoUploader
+                  photos={photos}
+                  onAddFiles={onAddPhotos}
+                  onRemove={onRemovePhoto}
+                  error={photoMessage ?? undefined}
+                  disabled={disabled}
+                  maxPhotos={MAX_PHOTOS}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {method === "text" ? (
+            <Field
+              label={t("report.fields.description")}
+              htmlFor="report-description"
+              hint={t("report.fields.descriptionHint", { min: DESCRIPTION_MIN })}
+              error={errors.description}
+            >
+              <Textarea
+                id="report-description"
+                value={draft.description}
+                onChange={(event) =>
+                  onDraftChange("description", event.target.value.slice(0, DESCRIPTION_MAX))
+                }
+                placeholder={t("report.fields.descriptionPlaceholder")}
+                rows={5}
+                disabled={disabled}
+                aria-invalid={Boolean(errors.description)}
+                aria-describedby={
+                  errors.description ? "report-description-error" : "report-description-hint"
+                }
+              />
+              <div className="mt-1 flex justify-end text-xs text-ink-400">
+                {draft.description.length}/{DESCRIPTION_MAX}
+              </div>
+            </Field>
+          ) : null}
         </div>
-      </Field>
+      )}
     </div>
+  );
+}
+
+type CaptureMethod = "voice" | "photo" | "text" | null;
+
+function CaptureMethodButton({
+  icon: Icon,
+  label,
+  done,
+  onClick,
+}: {
+  icon: typeof Mic;
+  label: string;
+  done: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative flex flex-col items-center gap-2 rounded-2xl border p-5 text-center text-sm font-medium transition-colors",
+        done
+          ? "border-success-300 bg-success-50 text-success-800"
+          : "border-ink-200 bg-white text-ink-700 hover:bg-ink-50",
+      )}
+    >
+      {done ? (
+        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-success-500 text-white">
+          <Check className="h-3 w-3" aria-hidden="true" />
+        </span>
+      ) : null}
+      <Icon className="h-6 w-6" aria-hidden="true" />
+      {label}
+    </button>
   );
 }
 
