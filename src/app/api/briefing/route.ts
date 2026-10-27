@@ -3,8 +3,9 @@ import {
   parseBriefingRequest,
   parseBriefingResponse,
 } from "@/lib/briefing";
+import { GEMINI_MODEL, requestGeminiJson, stripCodeFence } from "@/lib/gemini";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = GEMINI_MODEL;
 
 const SYSTEM_PROMPT = `You write a short operations brief for a Kampala drainage team.
 Use only the supplied hotspot JSON. Never invent locations, causes, injuries, weather, dispatch status, or actions already taken.
@@ -13,32 +14,32 @@ Priorities must use only supplied hotspot ids, ordered by the supplied score. Ea
 This is an advisory draft. No crew has been dispatched. Return JSON that matches the schema exactly.`;
 
 const responseSchema = {
-  type: "OBJECT",
+  type: "object",
   properties: {
     headline: {
-      type: "STRING",
+      type: "string",
       description: "Under 140 characters. Names the highest-priority hotspot.",
     },
     summary: {
-      type: "STRING",
+      type: "string",
       description: "Under 600 characters. Factual overview of the supplied hotspots.",
     },
     priorities: {
-      type: "ARRAY",
+      type: "array",
       description: "One to three priorities, ordered by supplied score.",
       items: {
-        type: "OBJECT",
+        type: "object",
         properties: {
           hotspotId: {
-            type: "STRING",
+            type: "string",
             description: "Must exactly match a supplied hotspot id.",
           },
           reason: {
-            type: "STRING",
+            type: "string",
             description: "Under 240 characters. Cite the report counts and score.",
           },
           action: {
-            type: "STRING",
+            type: "string",
             description: "Under 240 characters. Safe verification step, not a dispatched action.",
           },
         },
@@ -46,19 +47,11 @@ const responseSchema = {
       },
     },
     caveats: {
-      type: "STRING",
+      type: "string",
       description: "Under 280 characters. State the limits of the score and the draft.",
     },
   },
   required: ["headline", "summary", "priorities", "caveats"],
-};
-
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{ text?: string }>;
-    };
-  }>;
 };
 
 const rateLimit = new Map<string, number[]>();
@@ -141,56 +134,22 @@ export async function POST(request: Request) {
     "</hotspots>",
   ].join("\n");
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: userText }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 800,
-            responseMimeType: "application/json",
-            responseSchema,
-          },
-        }),
-        signal: AbortSignal.timeout(12_000),
-        cache: "no-store",
-      },
-    );
+  const result = await requestGeminiJson({
+    apiKey,
+    model: MODEL,
+    systemInstruction: SYSTEM_PROMPT,
+    input: userText,
+    schema: responseSchema,
+    temperature: 0.2,
+  });
 
-    if (!response.ok) {
-      console.error(`Gemini briefing failed with status ${response.status}`);
-      return json(fallbackBriefing(hotspots));
-    }
-
-    const data = (await response.json()) as GeminiResponse;
-    const text = data.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
-
-    if (!text) return json(fallbackBriefing(hotspots));
-
-    return json(parseBriefingResponse(text, hotspots) ?? fallbackBriefing(hotspots));
-  } catch (cause) {
-    console.error(
-      "Gemini briefing request errored:",
-      cause instanceof Error ? cause.message : "unknown error",
-    );
+  if (!result.ok) {
+    console.error(`Gemini briefing failed: ${result.reason}`);
     return json(fallbackBriefing(hotspots));
   }
+
+  return json(
+    parseBriefingResponse(stripCodeFence(result.text), hotspots) ??
+      fallbackBriefing(hotspots),
+  );
 }

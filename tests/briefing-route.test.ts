@@ -45,11 +45,10 @@ function makeRequest(
 function geminiResponse(briefing: unknown): Response {
   return new Response(
     JSON.stringify({
-      candidates: [
+      steps: [
         {
-          content: {
-            parts: [{ text: JSON.stringify(briefing) }],
-          },
+          type: "model_output",
+          content: [{ type: "text", text: JSON.stringify(briefing) }],
         },
       ],
     }),
@@ -106,16 +105,16 @@ describe("POST /api/briefing", () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     const sent = JSON.parse(init.body as string) as {
-      contents: Array<{ parts: Array<{ text: string }> }>;
-      generationConfig: { responseSchema: { required: string[] } };
+      input: string;
+      response_format: { schema: { required: string[] } };
     };
 
     expect(url).not.toContain("test-key");
     expect(headers["x-goog-api-key"]).toBe("test-key");
-    expect(sent.generationConfig.responseSchema.required).toContain("priorities");
-    expect(sent.contents[0].parts[0].text).toContain("Market drain");
-    expect(sent.contents[0].parts[0].text).not.toContain("reporter");
-    expect(sent.contents[0].parts[0].text).not.toContain("description");
+    expect(sent.response_format.schema.required).toContain("priorities");
+    expect(sent.input).toContain("Market drain");
+    expect(sent.input).not.toContain("reporter");
+    expect(sent.input).not.toContain("description");
   });
 
   it("falls back when the model returns invalid JSON", async () => {
@@ -125,7 +124,9 @@ describe("POST /api/briefing", () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            candidates: [{ content: { parts: [{ text: "not json" }] } }],
+            steps: [
+              { type: "model_output", content: [{ type: "text", text: "not json" }] },
+            ],
           }),
           { status: 200 },
         ),
