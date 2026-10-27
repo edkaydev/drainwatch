@@ -180,7 +180,7 @@ function HeroGraphic({ t }: { t: (key: string) => string }) {
         </div>
       </div>
 
-      <Card className="absolute -bottom-6 left-6 right-6 flex items-center gap-3 p-4 sm:left-10 sm:right-auto sm:w-72">
+      <Card className="absolute -bottom-6 left-4 right-4 flex items-center gap-3 p-4 sm:left-10 sm:right-auto sm:w-72">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success-50 text-success-500">
           <CheckCircle2 className="h-5 w-5" />
         </span>
