@@ -195,6 +195,15 @@ const en = {
   "report.photoUploader.choosePhotos": "Choose photos",
   "report.photoUploader.footerNote":
     "Photos are resized in your browser before upload. They may appear on the public hotspot map.",
+
+  "report.support.title": "Message our team",
+  "report.support.body":
+    "Can't finish the form? Send a short message and a staff member will follow up.",
+  "report.support.messagePlaceholder": "What do you need help with?",
+  "report.support.submit": "Send message",
+  "report.support.sending": "Sending…",
+  "report.support.success": "Message sent. A staff member will follow up soon.",
+  "report.support.error": "Could not send your message. Try again or use the contact options above.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -375,6 +384,15 @@ const lg: Record<TranslationKey, string> = {
   "report.photoUploader.choosePhotos": "Londa ebifaananyi",
   "report.photoUploader.footerNote":
     "Ebifaananyi binyoolebwa mu bbulaawuza yo nga tebinnasindikibwa. Biyinza okulabika ku maapu ey'olukale.",
+
+  "report.support.title": "Tumira tiimu yaffe obubaka",
+  "report.support.body":
+    "Tosobodde kumaliriza foomu? Tumira obubaka obufunze era omukozi ajja kukuddamu.",
+  "report.support.messagePlaceholder": "Oyagala tukuyambe mu ki?",
+  "report.support.submit": "Sindika obubaka",
+  "report.support.sending": "Nsindika…",
+  "report.support.success": "Obubaka butumiddwa. Omukozi ajja kukutuukirira mangu.",
+  "report.support.error": "Tetusobodde kusindika bubaka bwo. Ddamu ogezeeko, oba kozesa endala eziri waggulu.",
 };
 
 const sw: Record<TranslationKey, string> = {
@@ -555,6 +573,15 @@ const sw: Record<TranslationKey, string> = {
   "report.photoUploader.choosePhotos": "Chagua picha",
   "report.photoUploader.footerNote":
     "Picha hupunguzwa ukubwa kwenye kivinjari chako kabla ya kupakiwa. Zinaweza kuonekana kwenye ramani ya umma.",
+
+  "report.support.title": "Tuma ujumbe kwa timu yetu",
+  "report.support.body":
+    "Huwezi kukamilisha fomu? Tuma ujumbe mfupi na mfanyakazi atafuatilia.",
+  "report.support.messagePlaceholder": "Unahitaji msaada gani?",
+  "report.support.submit": "Tuma ujumbe",
+  "report.support.sending": "Inatuma…",
+  "report.support.success": "Ujumbe umetumwa. Mfanyakazi atafuatilia hivi karibuni.",
+  "report.support.error": "Imeshindikana kutuma ujumbe wako. Jaribu tena au tumia njia za mawasiliano hapo juu.",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {

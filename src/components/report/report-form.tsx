@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { PhotoUploader, type PhotoItem } from "./photo-uploader";
+import { SupportRequestCard } from "./support-request-card";
 import { LocationPicker } from "@/components/map/location-picker";
 import { Card } from "@/components/ui/card";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -631,6 +632,8 @@ export function ReportForm() {
               </a>
             </div>
           </Card>
+
+          <SupportRequestCard />
 
           {user ? (
             <Card className="p-5">

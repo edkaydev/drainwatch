@@ -255,6 +255,37 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    function validSupportRequestCreate() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['message', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['message', 'contactName', 'contactPhone', 'status', 'createdAt', 'updatedAt'])
+        && data.message is string
+        && data.message.size() >= 5
+        && data.message.size() <= 500
+        && data.status == 'open'
+        && (!data.keys().hasAny(['contactName']) || (data.contactName is string && data.contactName.size() <= 80))
+        && (!data.keys().hasAny(['contactPhone']) || (data.contactPhone is string && data.contactPhone.size() <= 30))
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    // Public reporters can send a message but never read or list requests, so
+    // one reporter can never see another's contact details or message.
+    match /supportRequests/{requestId} {
+      allow read: if isStaff();
+      allow create: if validSupportRequestCreate();
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'claimedBy', 'claimedByName', 'updatedAt'
+        ])
+        && request.resource.data.status in ['claimed', 'resolved']
+        && request.resource.data.claimedBy == request.auth.uid
+        && request.resource.data.claimedByName is string
+        && request.resource.data.claimedByName.size() > 0
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
     match /publicIncidents/{incidentId} {
       allow read: if true;
       allow create: if validPublicCreate(incidentId);

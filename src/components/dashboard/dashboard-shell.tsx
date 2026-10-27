@@ -12,18 +12,21 @@ import {
   LogOut,
   MapPinned,
   Menu,
+  MessageCircle,
   Search,
   Settings,
   X,
 } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useStaffPresence } from "@/hooks/use-presence";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/incidents", label: "Incidents", icon: ClipboardList },
+  { href: "/dashboard/support", label: "Support requests", icon: MessageCircle },
   { href: "/dashboard/hotspots", label: "Hotspots", icon: MapPinned },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/reports", label: "Reports", icon: FileBarChart },
@@ -43,6 +46,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { onlineCount } = useStaffPresence(user?.uid);
   const [open, setOpen] = useState(false);
 
   const displayName = user?.displayName?.trim() || user?.email || "Staff member";
@@ -169,6 +173,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {onlineCount !== null ? (
+              <span
+                className="hidden items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-600 sm:flex"
+                title="Staff currently online (internal only, never shown to the public)"
+              >
+                <span className="h-2 w-2 rounded-full bg-success-500" aria-hidden="true" />
+                {onlineCount} online
+              </span>
+            ) : null}
             <Link
               href="/dashboard/incidents"
               className="hidden items-center gap-2 rounded-full border border-ink-200 bg-white px-3.5 py-2 text-sm text-ink-500 shadow-sm transition-colors hover:text-ink-900 sm:flex"

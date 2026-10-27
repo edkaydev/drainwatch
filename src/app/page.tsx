@@ -74,14 +74,6 @@ export default function Home() {
                 Explore Map
               </LinkButton>
             </div>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <span className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
-                SDG 11 · Sustainable Cities
-              </span>
-              <span className="rounded-full bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-700">
-                SDG 13 · Climate Action
-              </span>
-            </div>
           </div>
 
           <HeroGraphic />
