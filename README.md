@@ -36,7 +36,7 @@ sanitised incident data plus explainable hotspot scores.
 - MapLibre GL with OpenFreeMap Liberty by default.
 - Google Maps URLs for field navigation (keyless deep links, not a replacement
   basemap).
-- Gemini `gemini-2.5-flash` through server-only route handlers.
+- Gemini `gemini-3.5-flash-lite` via the Interactions API through server-only route handlers (override with `GEMINI_MODEL`).
 - Lucide icons.
 
 ## Google technology integrations

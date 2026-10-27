@@ -12,6 +12,8 @@ import {
   Crosshair,
   FileWarning,
   MapPin,
+  MessageCircle,
+  Phone,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -613,7 +615,8 @@ export function ReportForm() {
           {/* Call centre card — always visible */}
           <Card className="p-5">
             <h2 className="flex items-center gap-2 font-semibold text-teal-900">
-              📞 Need help? Call us
+              <Phone className="h-4 w-4 text-brand-600" aria-hidden="true" />
+              Need help? Call us
             </h2>
             <p className="mt-2 text-xs leading-5 text-ink-500">
               Cannot submit? A DrainWatch agent will help you report by phone.
@@ -623,13 +626,15 @@ export function ReportForm() {
                 href="tel:112"
                 className="flex items-center justify-center gap-2 rounded-lg bg-critical-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-critical-700"
               >
-                📞 112 — Emergency Services
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                112 — Emergency Services
               </a>
               <a
                 href="tel:+256000000000"
                 className="flex items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-900 hover:bg-ink-50"
               >
-                📞 Call a DrainWatch Agent
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                Call a DrainWatch Agent
               </a>
               <a
                 href="https://wa.me/256000000000?text=I+need+to+report+a+drainage+hazard"
@@ -637,7 +642,8 @@ export function ReportForm() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-800 hover:bg-green-100"
               >
-                💬 WhatsApp DrainWatch
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                WhatsApp DrainWatch
               </a>
             </div>
           </Card>
@@ -1101,13 +1107,15 @@ function ReviewStep({
               href="tel:112"
               className="inline-flex items-center gap-2 rounded-lg bg-critical-600 px-4 py-2 text-sm font-semibold text-white hover:bg-critical-700"
             >
-              📞 Call 112 — Emergency
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              Call 112 — Emergency
             </a>
             <a
               href="tel:+256000000000"
               className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
             >
-              📞 Call a DrainWatch Agent
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              Call a DrainWatch Agent
             </a>
           </div>
         </div>
@@ -1122,7 +1130,8 @@ function ReviewStep({
             href="tel:+256000000000"
             className="inline-flex items-center gap-2 rounded-lg border border-warning-300 bg-white px-4 py-2 text-sm font-semibold text-warning-700 hover:bg-warning-50"
           >
-            📞 Call a DrainWatch Agent
+            <Phone className="h-4 w-4" aria-hidden="true" />
+            Call a DrainWatch Agent
           </a>
         </div>
       ) : null}
@@ -1410,14 +1419,16 @@ function SuccessPanel({
                 href="tel:112"
                 className="inline-flex items-center gap-2 rounded-lg bg-critical-600 px-4 py-2 text-sm font-semibold text-white hover:bg-critical-700"
               >
-                📞 Call 112 — Emergency
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                Call 112 — Emergency
               </a>
             ) : null}
             <a
               href="tel:+256000000000"
               className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
             >
-              📞 Call a DrainWatch Agent
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              Call a DrainWatch Agent
             </a>
           </div>
         </div>
