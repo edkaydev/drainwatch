@@ -1,7 +1,6 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
-import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getDatabase, type Database } from "firebase/database";
 
 const databaseURL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;
@@ -52,10 +51,6 @@ export function getDb(): Firestore {
 
 export function getFirebaseAuth(): Auth {
   return getAuth(getFirebaseApp());
-}
-
-export function getFirebaseStorage(): FirebaseStorage {
-  return getStorage(getFirebaseApp());
 }
 
 export function getFirebaseRealtimeDb(): Database {

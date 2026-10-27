@@ -4,7 +4,8 @@ export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
 export type GeminiContent =
   | { type: "text"; text: string }
-  | { type: "image"; data: string; mime_type: string };
+  | { type: "image"; data: string; mime_type: string }
+  | { type: "audio"; data: string; mime_type: string };
 
 type InteractionResponse = {
   steps?: Array<{
