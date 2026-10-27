@@ -108,10 +108,41 @@ Tasks to complete before judging. Work through these in order.
       description → live AI classification → Answer card → GPS location →
       Confirm → Send → real incident created and shown on the success panel
       with a working reference code. No console/page errors during the run
-- [ ] Mic-specific browser flow (permission prompt UI, stop/re-record while
-      recording) was not separately re-verified after the redesign — the
-      underlying `voice-recorder.tsx` component is unchanged from when it was
-      last tested, just remounted on a new card
+- [x] **Found and fixed the real cause of "Couldn't access the microphone"**:
+      `next.config.ts`'s `Permissions-Policy` header shipped `microphone=()` —
+      an empty allow-list that blocks every origin, including the page itself,
+      at the browser-policy level before any permission prompt can appear.
+      Changed to `microphone=(self)` (matching how `geolocation=(self)` was
+      already set correctly). Confirmed via curl that the response header
+      changed, and via a Playwright run with `--use-fake-device-for-media-stream`
+      that recording now actually starts (status goes to "Recording… Ns",
+      waveform animates) — before the fix the same test failed with a
+      `Permissions policy violation` console error
+- [x] Capture is no longer three inputs shown at once — it's a choice of one:
+      "Record a voice message" / "Add a photo" / "Type a description". Picking
+      one shows only that input, with a "Choose a different way" link back to
+      the chooser; a checkmark marks a method that already has content
+- [x] Improved microphone error messages to distinguish insecure-context
+      (`!window.isSecureContext`, the likely cause in a non-https preview),
+      permission-denied, device-in-use, and no-device-found, instead of one
+      generic message for every failure
+
+### 🟡 Animation and PWA install polish
+- [x] Added a shared `SpeakingWaveform` component (animated equalizer bars,
+      `src/components/ui/speaking-waveform.tsx`) used in two places: on
+      `AudioGuide` while a recorded prompt is actually playing (tracked via
+      the `<audio>` element's play/pause/ended events — not just a static
+      icon), and in `voice-recorder.tsx` during recording and transcribing
+- [x] Added `src/components/pwa-install-banner.tsx` — listens for the native
+      `beforeinstallprompt` event and shows a dismissible card (persisted via
+      `localStorage`) with an "Install" button that calls the browser's real
+      install prompt; renders nothing if the event never fires (already
+      installed, iOS Safari, unsupported browser) consistent with how
+      `AudioGuide`/`VoiceRecorder` already hide themselves when unsupported.
+      Mounted on the home page hero. Not visually confirmed in a real install
+      flow here — Playwright doesn't satisfy a browser's installability
+      criteria, so this was only confirmed to render nothing (correctly) in
+      the test environment, not confirmed triggering a real install
 
 ### 🟢 Pitch preparation
 - [ ] Write 3-minute pitch script: Problem → Solution → Demo → Next step
