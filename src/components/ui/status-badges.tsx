@@ -13,6 +13,15 @@ const SEVERITY_VARIANTS: Record<Severity, BadgeVariant> = {
   critical: "critical",
 };
 
+// Card/panel background+border+text tone per severity — critical always
+// reads as red, the rest stay visually distinct from each other.
+export const SEVERITY_CARD_TONE: Record<Severity, string> = {
+  critical: "border-critical-300 bg-critical-50 text-critical-800",
+  high: "border-warning-300 bg-warning-50 text-warning-800",
+  medium: "border-info-200 bg-info-50 text-info-800",
+  low: "border-success-200 bg-success-50 text-success-800",
+};
+
 const STATUS_VARIANTS: Record<IncidentStatus, BadgeVariant> = {
   new: "info",
   in_progress: "neutral",

@@ -32,7 +32,8 @@ import { Alert, Spinner } from "@/components/ui/feedback";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
-import { SeverityBadge } from "@/components/ui/status-badges";
+import { SeverityBadge, SEVERITY_CARD_TONE } from "@/components/ui/status-badges";
+import { SpeakingWaveform } from "@/components/ui/speaking-waveform";
 import { AudioGuide } from "@/components/ui/audio-guide";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useLanguage } from "@/components/layout/language-provider";
@@ -216,6 +217,7 @@ export function ReportForm() {
       setAiNotice(t("report.ai.fallbackNotice"));
     } finally {
       setAiLoading(false);
+      setStage("answer");
     }
   }
 
@@ -242,6 +244,7 @@ export function ReportForm() {
       setAiNotice(t("report.ai.fallbackNotice"));
     } finally {
       setAiLoading(false);
+      setStage("answer");
     }
   }
 
@@ -501,6 +504,8 @@ export function ReportForm() {
                   photoMessage={photoMessage}
                   photos={photos}
                   disabled={submitting}
+                  aiLoading={aiLoading}
+                  aiNotice={aiNotice}
                   onDraftChange={updateDraft}
                   onAddPhotos={addPhotos}
                   onRemovePhoto={removePhoto}
@@ -741,6 +746,8 @@ function CaptureStage({
   photos,
   photoMessage,
   disabled,
+  aiLoading,
+  aiNotice,
   onDraftChange,
   onAddPhotos,
   onRemovePhoto,
@@ -751,6 +758,8 @@ function CaptureStage({
   photos: PhotoItem[];
   photoMessage: string | null;
   disabled: boolean;
+  aiLoading: boolean;
+  aiNotice: string | null;
   onDraftChange: <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => void;
   onAddPhotos: (files: FileList | File[]) => void;
   onRemovePhoto: (id: string) => void;
@@ -857,6 +866,13 @@ function CaptureStage({
               </div>
             </Field>
           ) : null}
+
+          {aiLoading && aiNotice ? (
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-ink-500">
+              <SpeakingWaveform active className="h-4 text-brand-600" />
+              {aiNotice}
+            </div>
+          ) : null}
         </div>
       )}
     </div>
@@ -918,10 +934,15 @@ function AnswerStage({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4">
+      <div
+        className={cn(
+          "rounded-2xl border p-4",
+          ai ? SEVERITY_CARD_TONE[ai.severity] : "border-brand-200 bg-brand-50/50",
+        )}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-teal-900">
-            <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
             {t("report.ai.title")}
           </h3>
           {ai ? (
@@ -1331,13 +1352,6 @@ function SuccessPanel({
     }
   }
 
-  const severityColour: Record<string, string> = {
-    critical: "border-critical-300 bg-critical-50 text-critical-800",
-    high: "border-warning-300 bg-warning-50 text-warning-800",
-    medium: "border-info-200 bg-info-50 text-info-800",
-    low: "border-success-200 bg-success-50 text-success-800",
-  };
-
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:py-24 animate-fade-in-up">
       <div className="flex justify-center">
@@ -1354,9 +1368,10 @@ function SuccessPanel({
       {/* AI severity result */}
       {ai ? (
         <div
-          className={`mx-auto mt-6 max-w-sm rounded-2xl border p-4 text-left ${
-            ai.severity ? severityColour[ai.severity] : "border-ink-200 bg-white"
-          }`}
+          className={cn(
+            "mx-auto mt-6 max-w-sm rounded-2xl border p-4 text-left",
+            ai.severity ? SEVERITY_CARD_TONE[ai.severity] : "border-ink-200 bg-white",
+          )}
         >
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
