@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   LineChart,
   MapPin,
+  Mic,
   ShieldCheck,
 } from "lucide-react";
 import { SiteShell } from "@/components/layout/site-shell";
@@ -75,6 +76,10 @@ export default function Home() {
               </LinkButton>
               <LinkButton href="/map" variant="outline" size="lg">
                 {t("home.hero.cta2")}
+              </LinkButton>
+              <LinkButton href="/report?mode=voice" variant="ghost" size="lg">
+                <Mic className="h-4 w-4" />
+                {t("home.hero.cta3")}
               </LinkButton>
             </div>
           </div>

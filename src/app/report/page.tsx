@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import { ReportForm } from "@/components/report/report-form";
@@ -11,7 +12,9 @@ export const metadata: Metadata = {
 export default function ReportPage() {
   return (
     <SiteShell>
-      <ReportForm />
+      <Suspense>
+        <ReportForm />
+      </Suspense>
     </SiteShell>
   );
 }
