@@ -15,7 +15,6 @@ const SEVERITY_VARIANTS: Record<Severity, BadgeVariant> = {
 
 const STATUS_VARIANTS: Record<IncidentStatus, BadgeVariant> = {
   new: "info",
-  triaged: "warning",
   in_progress: "neutral",
   resolved: "success",
 };

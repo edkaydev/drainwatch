@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<IncidentStatus, "critical" | "warning" | "info" | "success"> = {
   new: "critical",
-  triaged: "warning",
   in_progress: "info",
   resolved: "success",
 };
