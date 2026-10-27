@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, EmptyState, LoadingBlock, Spinner } from "@/components/ui/feedback";
 import { usePublicIncidents } from "@/hooks/use-incidents";
 import { computeHotspots, hotspotTone } from "@/lib/hotspots";
-import { MAP_STYLE_URL, KAMPALA_BOUNDS, SEVERITY_COLOURS } from "@/lib/map-style";
+import { MAP_STYLE_URL, KAMPALA_BOUNDS, SEVERITY_COLOURS, loadMapLibre } from "@/lib/map-style";
 import {
   CATEGORY_LABELS,
   KAMPALA_CENTER,
@@ -166,7 +166,7 @@ export function PublicHotspotMap() {
     let cancelled = false;
 
     async function initialise() {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (cancelled || !containerRef.current) return;
 
       const map = new maplibre.Map({
@@ -483,6 +483,12 @@ export function PublicHotspotMap() {
             role="application"
             aria-label="Map of public drainage incidents in Kampala"
             className="absolute inset-0"
+            // maplibre-gl.css sets `.maplibregl-map { position: relative }`,
+            // which has the same specificity as Tailwind's `absolute` class
+            // and loads after it, so it silently wins and collapses this
+            // container to zero height. An inline style always wins over
+            // any stylesheet, so this is the reliable fix.
+            style={{ position: "absolute", inset: 0 }}
           />
 
           {loading ? (

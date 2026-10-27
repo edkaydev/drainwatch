@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored static asset (copy of maplibre-gl's worker bundle), not our code.
+    "public/maplibre-gl-worker.js",
   ]),
 ]);
 
