@@ -12,7 +12,6 @@ export function Footer() {
       title: t("footer.product"),
       links: [
         { href: "/report", label: t("nav.report") },
-        { href: "/map", label: t("footer.links.map") },
         { href: "/dashboard", label: t("footer.links.dashboard") },
       ],
     },
