@@ -1,4 +1,4 @@
-import { Compass, Home, MapPinned } from "lucide-react";
+import { Compass, FileWarning, Home } from "lucide-react";
 import { SiteShell } from "@/components/layout/site-shell";
 import { LinkButton } from "@/components/ui/button";
 
@@ -24,9 +24,9 @@ export default function NotFound() {
             <Home className="h-4 w-4" aria-hidden="true" />
             Back to home
           </LinkButton>
-          <LinkButton href="/map" variant="outline">
-            <MapPinned className="h-4 w-4" aria-hidden="true" />
-            Explore the map
+          <LinkButton href="/report" variant="outline">
+            <FileWarning className="h-4 w-4" aria-hidden="true" />
+            Report a drainage problem
           </LinkButton>
         </div>
       </div>
