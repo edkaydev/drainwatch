@@ -33,6 +33,33 @@ export function isImageMimeType(value: unknown): value is ImageMimeType {
   return (ACCEPTED_IMAGE_MIME_TYPES as readonly unknown[]).includes(value);
 }
 
+// MediaRecorder's actual mime type (the browser may append ";codecs=opus" etc.),
+// so audio is matched on the base type only.
+export const ACCEPTED_AUDIO_BASE_TYPES = [
+  "audio/webm",
+  "audio/ogg",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/aac",
+] as const;
+export type AudioMimeType = (typeof ACCEPTED_AUDIO_BASE_TYPES)[number];
+
+// Generous headroom over a ~90s opus/aac recording so legitimate voice
+// reports never get rejected on size alone.
+export const MAX_AUDIO_SECONDS = 90;
+export const MAX_AUDIO_BASE64_LENGTH = 8 * 1024 * 1024;
+
+export function audioBaseType(mimeType: string): string {
+  return mimeType.split(";")[0]?.trim().toLowerCase() ?? "";
+}
+
+export function isAudioMimeType(value: unknown): value is AudioMimeType {
+  if (typeof value !== "string") return false;
+  return (ACCEPTED_AUDIO_BASE_TYPES as readonly string[]).includes(audioBaseType(value));
+}
+
 // Expanded to cover Kampala, Nkozi/UMU (~72 km SW), and surrounding greater Uganda area.
 const KAMPALA_BOUNDS = {
   minLat: -0.35,
@@ -196,6 +223,25 @@ export function parseClassifyRequest(value: unknown): ClassifyRequest | null {
     severity: isSeverity(record.severity) ? record.severity : undefined,
     imageBase64,
     imageMimeType,
+  };
+}
+
+export type TranscribeRequest = {
+  audioBase64: string;
+  audioMimeType: AudioMimeType;
+};
+
+export function parseTranscribeRequest(value: unknown): TranscribeRequest | null {
+  if (typeof value !== "object" || value === null) return null;
+
+  const record = value as Record<string, unknown>;
+  if (typeof record.audioBase64 !== "string" || record.audioBase64.length === 0) return null;
+  if (record.audioBase64.length > MAX_AUDIO_BASE64_LENGTH) return null;
+  if (!isAudioMimeType(record.audioMimeType)) return null;
+
+  return {
+    audioBase64: record.audioBase64,
+    audioMimeType: record.audioMimeType,
   };
 }
 
