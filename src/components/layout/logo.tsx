@@ -38,7 +38,7 @@ export function Logo({ className, dark }: { className?: string; dark?: boolean }
     <span className={cn("inline-flex items-center gap-2 font-semibold", className)}>
       <LogoMark className="h-8 w-8 shrink-0" />
       <span className={cn("text-lg tracking-tight", dark ? "text-white" : "text-teal-900")}>
-        DrainWatch <span className="text-brand-600">AI</span>
+        DrainWatch
       </span>
     </span>
   );

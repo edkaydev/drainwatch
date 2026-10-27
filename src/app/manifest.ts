@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "DrainWatch AI",
+    name: "DrainWatch",
     short_name: "DrainWatch",
     description:
       "AI-assisted drainage hazard reporting and hotspot intelligence for a flood-resilient Kampala.",
