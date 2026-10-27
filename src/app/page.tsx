@@ -75,10 +75,7 @@ export default function Home() {
                 {t("home.hero.cta1")}
                 <ArrowRight className="h-4 w-4" />
               </LinkButton>
-              <LinkButton href="/map" variant="outline" size="lg">
-                {t("home.hero.cta2")}
-              </LinkButton>
-              <LinkButton href="/report?mode=voice" variant="ghost" size="lg">
+              <LinkButton href="/report?mode=voice" variant="outline" size="lg">
                 <Mic className="h-4 w-4" />
                 {t("home.hero.cta3")}
               </LinkButton>
@@ -137,7 +134,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Map teaser */}
+      {/* Hotspot intelligence (internal capability, not a public view) */}
       <section id="insights" className="bg-teal-950">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div className="text-white">
@@ -148,10 +145,6 @@ export default function Home() {
               {t("home.map.title")}
             </h2>
             <p className="mt-4 max-w-md text-teal-200">{t("home.map.body")}</p>
-            <LinkButton href="/map" variant="primary" className="mt-8">
-              {t("home.map.cta")}
-              <ArrowRight className="h-4 w-4" />
-            </LinkButton>
           </div>
           <HotspotGraphic />
         </div>
@@ -166,7 +159,7 @@ export default function Home() {
             </h2>
             <p className="mt-1 text-sm text-ink-500">{t("home.contact.body")}</p>
           </div>
-          <LinkButton href="mailto:peace@sustainableaccessfoundation.org" variant="dark">
+          <LinkButton href="/report" variant="dark">
             {t("home.contact.cta")}
           </LinkButton>
         </Card>
