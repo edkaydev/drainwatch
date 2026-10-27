@@ -21,7 +21,7 @@ const en = {
   "report.badge": "Public incident report",
   "report.pageTitle": "Report a drainage hazard",
   "report.pageSubtitle":
-    "Three quick steps. Your contact details stay private to staff; the location, category, severity, status, and first photo may appear on the public hotspot map.",
+    "Three quick steps. Your phone and email stay private; the location, type of problem, how serious it is, and your first photo may appear on the public map.",
 
   "report.steps.details": "Details",
   "report.steps.location": "Location",
@@ -59,10 +59,10 @@ const en = {
   "report.fields.descriptionPlaceholder":
     "Describe the hazard, how long it has been there, and what it is affecting.",
   "report.fields.photos": "Photos (optional)",
-  "report.fields.photosHint": "A clear photo helps staff verify the hazard faster.",
+  "report.fields.photosHint": "A clear photo helps our team check the problem faster.",
   "report.fields.yourDetails": "Your details (optional)",
   "report.fields.detailsHint":
-    "Only staff can see this. It is never shown on the public map. Leave it blank to report anonymously.",
+    "Only our team can see this. It is never shown on the public map. Leave it blank to report without giving your name.",
   "report.fields.name": "Name",
   "report.fields.phone": "Phone",
   "report.fields.phonePlaceholder": "+256…",
@@ -104,12 +104,12 @@ const en = {
     "I confirm this report is accurate to the best of my knowledge. I understand that the category, severity, status, location, and first photo may be shown publicly, while my contact details remain private.",
   "report.consentError": "Confirm that the report is accurate and may be shown publicly.",
 
-  "report.warning.critical": "Critical hazard detected by AI",
+  "report.warning.critical": "Very dangerous — act now",
   "report.warning.criticalBody":
-    "This report has been assessed as critical severity. If there is immediate danger to life, contact emergency services (112) before submitting.",
-  "report.warning.high": "High severity hazard",
+    "The AI says this is very dangerous. If someone's life is at risk, call emergency services (112) before sending this report.",
+  "report.warning.high": "Serious problem nearby",
   "report.warning.highBody":
-    "The AI has assessed this as a high severity hazard. Keep bystanders away and submit as soon as it is safe to do so.",
+    "The AI says this is a serious problem. Keep people away and send the report as soon as you are safe.",
 
   "report.review.editDetails": "Edit details",
   "report.review.editLocation": "Edit location",
@@ -128,20 +128,20 @@ const en = {
     "No suggestion yet. Continue to submit without one, or re-run the classifier.",
   "report.review.matches": "Matches your report",
   "report.review.confidenceNote":
-    "This is advisory; staff will verify it. Submitting does not accept the suggestion automatically.",
+    "This is a suggestion only. A real person on our team will check it. Sending the report does not accept this automatically.",
 
   "report.success.title": "Report received",
   "report.success.body":
-    "Thank you. The report is saved for staff review and now appears in the operations dashboard.",
-  "report.success.aiAssessment": "AI Assessment",
+    "Thank you. Your report has been sent to our team and will be looked at soon.",
+  "report.success.aiAssessment": "What the AI found",
   "report.success.severityWord": "severity",
   "report.success.categoryLabel": "Category",
   "report.success.urgencyLabel": "Urgency",
   "report.success.confidenceLabel": "Confidence",
   "report.success.urgentCritical":
-    "This looks like a critical hazard. If there is immediate danger to life, call emergency services (112) first.",
+    "This looks very dangerous. If someone is at risk right now, call emergency services (112) first.",
   "report.success.urgentHigh":
-    "This looks like a serious hazard. Keep bystanders away and report to local authorities if needed.",
+    "This looks like a serious problem. Keep people away and let local authorities know if needed.",
   "report.success.reference": "Reference",
   "report.success.copy": "Copy",
   "report.success.copied": "Copied!",
@@ -150,18 +150,18 @@ const en = {
   "report.success.another": "Submit another report",
   "report.success.backHome": "Back to home",
   "report.success.footnote":
-    "Keep the reference if you need to follow up. Staff may contact you only if you provided contact details.",
+    "Keep this number in case you need to follow up. Our team will contact you only if you left your phone or email.",
 
-  "report.ai.title": "AI suggestion",
-  "report.ai.analysing": "Analysing the description…",
+  "report.ai.title": "What the AI thinks",
+  "report.ai.analysing": "Reading your description…",
   "report.ai.confidence": "confidence",
   "report.ai.category": "Category",
   "report.ai.severity": "Severity",
   "report.ai.urgency": "Urgency",
-  "report.ai.analysingPhoto": "Analysing the photo…",
-  "report.ai.fallbackSource": "Rule-based fallback",
+  "report.ai.analysingPhoto": "Looking at your photo…",
+  "report.ai.fallbackSource": "Basic check (no AI)",
   "report.ai.fallbackNotice":
-    "Gemini is unavailable, so a rule-based suggestion is shown instead.",
+    "AI is not available right now. Showing a basic check instead.",
 
   "report.errors.location": "Location needed",
   "report.errors.details":
@@ -179,12 +179,12 @@ const en = {
   "report.upload.submitting": "Submitting…",
 
   "report.sidebar.nextTitle": "What happens next",
-  "report.sidebar.next1": "The report is saved privately for staff review.",
-  "report.sidebar.next2": "An AI suggestion is attached, but a person decides whether to use it.",
-  "report.sidebar.next3": "Staff triage the incident and update its status.",
+  "report.sidebar.next1": "Your report is saved and sent to our team.",
+  "report.sidebar.next2": "The AI checks it, but a real person makes the final decision.",
+  "report.sidebar.next3": "Our team looks at it and updates you on what is being done.",
   "report.sidebar.safeTitle": "Stay safe",
   "report.sidebar.safeBody":
-    "Do not enter floodwater, open manholes, or damaged drains. Report from a safe distance. For an immediate emergency, contact local emergency services first.",
+    "Do not go into floodwater, open holes, or broken drains. Report from a safe distance. If someone is in danger right now, call emergency services first.",
   "report.sidebar.signedInAs": "Signed in as",
   "report.sidebar.linkedAccount": "This report will be linked to your staff account.",
 
