@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Search,
   Settings,
+  Sparkles,
   X,
 } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
@@ -25,6 +26,7 @@ import { initials } from "@/lib/format";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/dashboard/insights", label: "AI Insights", icon: Sparkles },
   { href: "/dashboard/incidents", label: "Incidents", icon: ClipboardList },
   { href: "/dashboard/support", label: "Support requests", icon: MessageCircle },
   { href: "/dashboard/hotspots", label: "Hotspots", icon: MapPinned },

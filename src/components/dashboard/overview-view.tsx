@@ -18,8 +18,6 @@ import { Alert, EmptyState, LoadingBlock } from "@/components/ui/feedback";
 import { LinkButton } from "@/components/ui/button";
 import { SeverityBadge, StatusBadge } from "@/components/ui/status-badges";
 import { useIncidents } from "@/hooks/use-incidents";
-import { incidentToPublic } from "@/lib/incidents";
-import { computeHotspots, hotspotTone } from "@/lib/hotspots";
 import {
   activeIncidents,
   averageResponseHours,
@@ -63,7 +61,6 @@ export function OverviewView() {
     (incident) => incident.severity === "high" || incident.severity === "critical",
   ).length;
   const response = averageResponseHours(incidents);
-  const hotspots = computeHotspots(incidents.map(incidentToPublic)).slice(0, 5);
   const trend = buildDailyTrend(incidents, 14);
   const statusCounts = countByStatus(incidents);
   const recent = incidents.slice(0, 5);
@@ -158,96 +155,47 @@ export function OverviewView() {
             </Card>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-2">
-            <Card className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-teal-900">Top hotspots</h3>
-                  <p className="mt-0.5 text-xs text-ink-400">
-                    Recurrence, severity, recency, concentration
-                  </p>
-                </div>
-                <Link
-                  href="/dashboard/hotspots"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-800"
-                >
-                  View all <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </Link>
+          <Card className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-teal-900">Recent incidents</h3>
+                <p className="mt-0.5 text-xs text-ink-400">Newest reports first</p>
               </div>
-              {hotspots.length === 0 ? (
-                <p className="py-8 text-center text-sm text-ink-400">
-                  Hotspots appear when reports are grouped into a location cell.
-                </p>
-              ) : (
-                <ul className="mt-4 space-y-2">
-                  {hotspots.map((hotspot) => {
-                    const tone = hotspotTone(hotspot.score);
-                    return (
-                      <li key={hotspot.id}>
-                        <div className="flex items-center gap-3 rounded-xl border border-ink-100 px-3.5 py-3">
-                          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-ink-800">
-                              {hotspot.address || hotspot.division || "Kampala"}
-                            </p>
-                            <p className="text-xs text-ink-400">
-                              {hotspot.count} report{hotspot.count === 1 ? "" : "s"} ·{" "}
-                              {formatRelativeTime(hotspot.lastReportedAt)}
-                            </p>
-                          </div>
-                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone.className}`}>
-                            {hotspot.score}
-                          </span>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Card>
-
-            <Card className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-teal-900">Recent incidents</h3>
-                  <p className="mt-0.5 text-xs text-ink-400">Newest reports first</p>
-                </div>
-                <Link
-                  href="/dashboard/incidents"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-800"
-                >
-                  View all <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </Link>
-              </div>
-              <ul className="mt-4 divide-y divide-ink-100">
-                {recent.map((incident) => (
-                  <li key={incident.id}>
-                    <Link
-                      href={`/dashboard/incidents/${incident.id}`}
-                      className="-mx-2 flex items-start gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-ink-50"
-                    >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                        <MapPin className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-ink-800">
-                          {incident.title}
-                        </p>
-                        <p className="mt-0.5 truncate text-xs text-ink-400">
-                          {CATEGORY_LABELS[incident.category]} ·{" "}
-                          {formatRelativeTime(incident.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <SeverityBadge severity={incident.severity} />
-                        <StatusBadge status={incident.status} />
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </div>
+              <Link
+                href="/dashboard/incidents"
+                className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-800"
+              >
+                View all <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </div>
+            <ul className="mt-4 divide-y divide-ink-100 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
+              {recent.map((incident) => (
+                <li key={incident.id} className="sm:border-b sm:border-ink-100 sm:last:border-0">
+                  <Link
+                    href={`/dashboard/incidents/${incident.id}`}
+                    className="-mx-2 flex items-start gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-ink-50"
+                  >
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-ink-800">
+                        {incident.title}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-ink-400">
+                        {CATEGORY_LABELS[incident.category]} ·{" "}
+                        {formatRelativeTime(incident.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <SeverityBadge severity={incident.severity} />
+                      <StatusBadge status={incident.status} />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
 
           <Card className="p-5">
             <h3 className="font-semibold text-teal-900">Severity mix</h3>
