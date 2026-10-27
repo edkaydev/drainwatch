@@ -18,6 +18,11 @@ const en = {
   "nav.contact": "Contact",
   "nav.report": "Report an Incident",
 
+  "pwa.install.title": "Install DrainWatch",
+  "pwa.install.body": "Add it to your home screen for one-tap access, even with a weak connection.",
+  "pwa.install.cta": "Install",
+  "pwa.install.dismiss": "Dismiss",
+
   "report.badge": "Public incident report",
   "report.pageTitle": "Report a drainage hazard",
   "report.pageSubtitle":
@@ -29,7 +34,11 @@ const en = {
   "report.welcome.start": "Start",
 
   "report.capture.title": "What have you found?",
-  "report.capture.subtitle": "Record a voice message, add a photo, or type below.",
+  "report.capture.subtitle": "Choose one way to describe it.",
+  "report.capture.chooseVoice": "Record a voice message",
+  "report.capture.choosePhoto": "Add a photo",
+  "report.capture.chooseText": "Type a description",
+  "report.capture.chooseDifferent": "Choose a different way",
 
   "report.answer.title": "Here's what we understood",
   "report.answer.subtitle": "Check this looks right before continuing.",
@@ -65,6 +74,9 @@ const en = {
   "report.voice.added": "Added to the description below",
   "report.voice.hint": "Up to 90 seconds. Not saved after transcription.",
   "report.voice.micDenied": "Couldn't access the microphone. Check your browser permissions and try again.",
+  "report.voice.micNotFound": "No microphone was found on this device.",
+  "report.voice.micInUse": "The microphone is being used by another app. Close it and try again.",
+  "report.voice.insecureContext": "Voice recording needs a secure (https) connection. Try the live site instead of this preview.",
   "report.voice.empty": "No audio was captured. Try recording again.",
   "report.voice.unsupportedFormat": "Your browser's recording format isn't supported. Try a different browser.",
   "report.voice.failed": "Couldn't transcribe that recording. Try again or type your report instead.",
@@ -336,6 +348,11 @@ const lg: Record<TranslationKey, string> = {
   "nav.contact": "Tukwatagane",
   "nav.report": "Wayo Lipooti",
 
+  "pwa.install.title": "Teeka DrainWatch",
+  "pwa.install.body": "Gisse ku sirini yo esooka olyoke ogikozese mangu, ne ku netwaka ennafu.",
+  "pwa.install.cta": "Teeka",
+  "pwa.install.dismiss": "Ggalawo",
+
   "report.badge": "Lipooti y'olukale",
   "report.pageTitle": "Wayo Lipooti ku Akabi k'Omudumu",
   "report.welcome.title": "Ka tuwe lipooti ku kabi kano",
@@ -344,7 +361,11 @@ const lg: Record<TranslationKey, string> = {
   "report.welcome.start": "Tandika",
 
   "report.capture.title": "Olabye ki?",
-  "report.capture.subtitle": "Rekoda obubaka mu ddoboozi, gatta ekifaananyi, oba wandiika wansi.",
+  "report.capture.subtitle": "Londa engeri emu ey'okukinnyonnyola.",
+  "report.capture.chooseVoice": "Rekoda obubaka mu ddoboozi",
+  "report.capture.choosePhoto": "Gatta ekifaananyi",
+  "report.capture.chooseText": "Wandiika ebikwata ku nsonga",
+  "report.capture.chooseDifferent": "Londa engeri endala",
 
   "report.answer.title": "Bino bye tutegedde",
   "report.answer.subtitle": "Kakasa nti bituufu nga tonannyiiza mu maaso.",
@@ -382,6 +403,9 @@ const lg: Record<TranslationKey, string> = {
   "report.voice.added": "Kyawandiikiddwa mu description wansi",
   "report.voice.hint": "Ebbanga eritasukka ddakiika emu. Tetukuuma ddoboozi oluvannyuma.",
   "report.voice.micDenied": "Tetusobodde kutuuka ku maiki. Kebera obuyinza bw'omukutu gwo oguddemu ogezeeko.",
+  "report.voice.micNotFound": "Tewali maiki ezuuliddwa ku kyuma kino.",
+  "report.voice.micInUse": "Maiki ekozesebwa pulogulaamu endala. Giggyeewo ogezeeko nate.",
+  "report.voice.insecureContext": "Okukwata eddoboozi kwetaaga omukutu omukuumibwa (https). Gezaako ku mukutu omutuufu, si kuno.",
   "report.voice.empty": "Tewali ddoboozi lyakwatiddwa. Ddamu ogezeeko.",
   "report.voice.unsupportedFormat": "Omukutu gwo tegukkiriza enkola eno. Gezaako omukutu omulala.",
   "report.voice.failed": "Tetusobodde kukyusa ddoboozi mu bigambo. Ddamu ogezeeko oba wandiika ripoota yo.",
