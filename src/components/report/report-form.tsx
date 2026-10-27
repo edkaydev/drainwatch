@@ -17,13 +17,11 @@ import {
   Mic,
   MessageCircle,
   Phone,
-  ShieldCheck,
   Sparkles,
   Type,
 } from "lucide-react";
 import { PhotoUploader, type PhotoItem } from "./photo-uploader";
 import { VoiceRecorder } from "./voice-recorder";
-import { SupportRequestCard } from "./support-request-card";
 import { LanguageGate } from "./language-gate";
 import { LocationPicker } from "@/components/map/location-picker";
 import { LocationSearch } from "./location-search";
@@ -615,26 +613,6 @@ export function ReportForm() {
         </form>
 
         <aside className="space-y-4">
-          <Card className="p-5">
-            <h2 className="flex items-center gap-2 font-semibold text-teal-900">
-              <ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden="true" />
-              {t("report.sidebar.nextTitle")}
-            </h2>
-            <ol className="mt-3 space-y-3 text-sm text-ink-600">
-              <li className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">1</span>
-                {t("report.sidebar.next1")}
-              </li>
-              <li className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">2</span>
-                {t("report.sidebar.next2")}
-              </li>
-              <li className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">3</span>
-                {t("report.sidebar.next3")}
-              </li>
-            </ol>
-          </Card>
 
           <Card className="border-warning-500/20 bg-warning-50/40 p-5">
             <h2 className="flex items-center gap-2 font-semibold text-warning-600">
@@ -644,43 +622,43 @@ export function ReportForm() {
             <p className="mt-2 text-sm leading-6 text-ink-600">{t("report.sidebar.safeBody")}</p>
           </Card>
 
-          {/* Call centre card — always visible */}
-          <Card className="p-5">
-            <h2 className="flex items-center gap-2 font-semibold text-teal-900">
-              <Phone className="h-4 w-4 text-brand-600" aria-hidden="true" />
-              Need help? Call us
-            </h2>
-            <p className="mt-2 text-xs leading-5 text-ink-500">
-              Cannot submit? A DrainWatch agent will help you report by phone.
-            </p>
-            <div className="mt-3 flex flex-col gap-2">
-              <a
-                href="tel:112"
-                className="flex items-center justify-center gap-2 rounded-lg bg-critical-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-critical-700"
-              >
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                112 — Emergency Services
-              </a>
-              <a
-                href="tel:+256000000000"
-                className="flex items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-900 hover:bg-ink-50"
-              >
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                Call a DrainWatch Agent
-              </a>
-              <a
-                href="https://wa.me/256000000000?text=I+need+to+report+a+drainage+hazard"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-800 hover:bg-green-100"
-              >
-                <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                WhatsApp DrainWatch
-              </a>
-            </div>
-          </Card>
-
-          <SupportRequestCard />
+          {/* Call centre card — only surfaced once the AI flags the report as urgent */}
+          {ai?.severity === "critical" || ai?.severity === "high" ? (
+            <Card className="p-5">
+              <h2 className="flex items-center gap-2 font-semibold text-teal-900">
+                <Phone className="h-4 w-4 text-brand-600" aria-hidden="true" />
+                Need help? Call us
+              </h2>
+              <p className="mt-2 text-xs leading-5 text-ink-500">
+                This looks urgent. A DrainWatch agent can help you report it by phone.
+              </p>
+              <div className="mt-3 flex flex-col gap-2">
+                <a
+                  href="tel:112"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-critical-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-critical-700"
+                >
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  112 — Emergency Services
+                </a>
+                <a
+                  href="tel:+256746838046"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-900 hover:bg-ink-50"
+                >
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  Call a DrainWatch Agent
+                </a>
+                <a
+                  href="https://wa.me/256746838046?text=I+need+to+report+a+drainage+hazard"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-800 hover:bg-green-100"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  WhatsApp DrainWatch
+                </a>
+              </div>
+            </Card>
+          ) : null}
 
           {user ? (
             <Card className="p-5">
@@ -1405,7 +1383,7 @@ function SuccessPanel({
               </a>
             ) : null}
             <a
-              href="tel:+256000000000"
+              href="tel:+256746838046"
               className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
             >
               <Phone className="h-4 w-4" aria-hidden="true" />

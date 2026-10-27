@@ -193,10 +193,6 @@ const en = {
   "report.upload.saving": "Saving your report…",
   "report.upload.submitting": "Submitting…",
 
-  "report.sidebar.nextTitle": "What happens next",
-  "report.sidebar.next1": "Your report is saved and sent to our team.",
-  "report.sidebar.next2": "The AI checks it, but a real person makes the final decision.",
-  "report.sidebar.next3": "Our team looks at it and updates you on what is being done.",
   "report.sidebar.safeTitle": "Stay safe",
   "report.sidebar.safeBody":
     "Do not go into floodwater, open holes, or broken drains. Report from a safe distance. If someone is in danger right now, call emergency services first.",
@@ -211,15 +207,6 @@ const en = {
   "report.photoUploader.choosePhotos": "Choose photos",
   "report.photoUploader.footerNote":
     "Photos are only used by the AI to understand the hazard. We never save or publish them.",
-
-  "report.support.title": "Message our team",
-  "report.support.body":
-    "Can't finish the form? Send a short message and a staff member will follow up.",
-  "report.support.messagePlaceholder": "What do you need help with?",
-  "report.support.submit": "Send message",
-  "report.support.sending": "Sending…",
-  "report.support.success": "Message sent. A staff member will follow up soon.",
-  "report.support.error": "Could not send your message. Try again or use the contact options above.",
 
   "report.languageGate.title": "Choose your language",
   "report.languageGate.subtitle": "Select the language you want to use for this report.",
@@ -513,10 +500,6 @@ const lg: Record<TranslationKey, string> = {
   "report.upload.saving": "Nteka lipooti yo…",
   "report.upload.submitting": "Nsindika…",
 
-  "report.sidebar.nextTitle": "Ekiddako",
-  "report.sidebar.next1": "Lipooti eteekebwa mu kyama okukebenkanibwa abakozi.",
-  "report.sidebar.next2": "Magezi ga AI gagattibwa, naye omuntu y'asalawo obanga gakozesebwa.",
-  "report.sidebar.next3": "Abakozi bakebera akabi ne bakyusa embeera yaako.",
   "report.sidebar.safeTitle": "Beera mukuumi",
   "report.sidebar.safeBody":
     "Toyingira mu mazzi, mu nnyumba ezigguddwa, oba ku midumu egyonoonese. Wayo olipooti ng'oli wala. Bwe wabaawo akabi mu kaseera, kubiriza abayambi ab'omu kitundu.",
@@ -531,15 +514,6 @@ const lg: Record<TranslationKey, string> = {
   "report.photoUploader.choosePhotos": "Londa ebifaananyi",
   "report.photoUploader.footerNote":
     "Ebifaananyi bikozesebwa AI yokka okutegeera akabi. Tetubikuuma wadde okubirambisa.",
-
-  "report.support.title": "Tumira tiimu yaffe obubaka",
-  "report.support.body":
-    "Tosobodde kumaliriza foomu? Tumira obubaka obufunze era omukozi ajja kukuddamu.",
-  "report.support.messagePlaceholder": "Oyagala tukuyambe mu ki?",
-  "report.support.submit": "Sindika obubaka",
-  "report.support.sending": "Nsindika…",
-  "report.support.success": "Obubaka butumiddwa. Omukozi ajja kukutuukirira mangu.",
-  "report.support.error": "Tetusobodde kusindika bubaka bwo. Ddamu ogezeeko, oba kozesa endala eziri waggulu.",
 
   "report.languageGate.title": "Londa Olulimi Lwo",
   "report.languageGate.subtitle": "Londa olulimi lw'oyagala okukozesa okuwayo lipooti eno.",
