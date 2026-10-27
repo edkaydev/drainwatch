@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 
 const MUTED_KEY = "drainwatch:muted";
 
-type StepKey = 1 | 2 | 3 | "success";
+export type StepKey = "welcome" | "capture" | "location" | "confirm" | "success";
 
 // Recorded voiceovers only — no browser text-to-speech anywhere in the app.
 // A language/step without a recording here just hides the button.
 const RECORDING_FILE: Record<Language, Partial<Record<StepKey, string>>> = {
-  en: { 1: "welcome", 2: "location", 3: "confirm", success: "success" },
-  lg: { 1: "welcome", 2: "location", 3: "confirm", success: "success" },
+  en: { welcome: "welcome", capture: "report", location: "location", confirm: "confirm", success: "success" },
+  lg: { welcome: "welcome", capture: "report", location: "location", confirm: "confirm", success: "success" },
 };
 
 function recordingUrl(language: Language, step: StepKey): string | null {
@@ -64,10 +64,8 @@ export function AudioGuide({
   language,
   className,
 }: {
-  step: 1 | 2 | 3 | "success";
+  step: StepKey;
   language: Language;
-  /** Kept for callers that still pass it; no longer spoken (TTS was removed). */
-  aiSummary?: string;
   className?: string;
 }) {
   const muted = useSyncExternalStore(subscribeMuted, readMuted, getBooleanServerSnapshot);

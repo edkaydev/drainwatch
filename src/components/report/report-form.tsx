@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -18,6 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { PhotoUploader, type PhotoItem } from "./photo-uploader";
+import { VoiceRecorder } from "./voice-recorder";
 import { SupportRequestCard } from "./support-request-card";
 import { LanguageGate } from "./language-gate";
 import { LocationPicker } from "@/components/map/location-picker";
@@ -31,27 +33,18 @@ import { SeverityBadge } from "@/components/ui/status-badges";
 import { AudioGuide } from "@/components/ui/audio-guide";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useLanguage } from "@/components/layout/language-provider";
+import type { Language } from "@/lib/i18n";
 import { classifyFallback } from "@/lib/classifier";
-import {
-  createIncident,
-  newIncidentId,
-  requestClassification,
-  uploadIncidentPhoto,
-} from "@/lib/incidents";
+import { createIncident, newIncidentId, requestClassification } from "@/lib/incidents";
 import { compressPhoto } from "@/lib/images";
 import { isFirebaseConfigured } from "@/lib/firebase";
-import {
-  INCIDENT_CATEGORIES,
-  KAMPALA_DIVISIONS,
-  SEVERITY_LABELS,
-  URGENCY_LABELS,
-  type AIClassification,
-} from "@/lib/types";
+import { KAMPALA_DIVISIONS, SEVERITY_LABELS, URGENCY_LABELS, type AIClassification } from "@/lib/types";
 import {
   DESCRIPTION_MAX,
   DESCRIPTION_MIN,
   MAX_PHOTOS,
   photoError,
+  validateCoordinates,
   validateDraft,
   type ImageMimeType,
   type ReportDraft,
@@ -60,13 +53,17 @@ import {
 import { formatCoordinates } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Step = 1 | 2 | 3;
+type Stage = "welcome" | "capture" | "answer" | "location" | "confirm";
 
-const STEPS = [
-  { number: 1, key: "report.steps.details" },
-  { number: 2, key: "report.steps.location" },
-  { number: 3, key: "report.steps.review" },
-] as const;
+const STAGE_ORDER: Stage[] = ["welcome", "capture", "answer", "location", "confirm"];
+
+const STAGE_BACK: Record<Stage, Stage | null> = {
+  welcome: null,
+  capture: "welcome",
+  answer: "capture",
+  location: "answer",
+  confirm: "location",
+};
 
 const LAST_REPORT_KEY = "drainwatch:last-report";
 const SUBMISSION_COOLDOWN_MS = 60_000;
@@ -117,8 +114,11 @@ function fileToBase64(file: File): Promise<string> {
 
 export function ReportForm() {
   const { user } = useAuth();
-  const { t, languageChosen } = useLanguage();
-  const [step, setStep] = useState<Step>(1);
+  const { t, language, languageChosen } = useLanguage();
+  const searchParams = useSearchParams();
+  const [stage, setStage] = useState<Stage>(() =>
+    searchParams.get("mode") === "voice" ? "capture" : "welcome",
+  );
   const [draft, setDraft] = useState<ReportDraft>(makeEmptyDraft);
   const [errors, setErrors] = useState<ReportErrors>({});
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -151,11 +151,11 @@ export function ReportForm() {
 
   const aiKeyRef = useRef<string | null>(null);
 
-  // Severity is AI-determined, not user-picked, so every classification
-  // result (Gemini or the rule-based fallback) becomes the draft's severity.
+  // Category and severity are AI-determined, not user-picked, so every
+  // classification result (Gemini or the rule-based fallback) becomes the draft.
   function applyAiResult(result: AIClassification) {
     setAi(result);
-    setDraft((current) => ({ ...current, severity: result.severity }));
+    setDraft((current) => ({ ...current, category: result.category, severity: result.severity }));
   }
 
   async function runClassification(force = false) {
@@ -192,8 +192,9 @@ export function ReportForm() {
     setAiNotice(t("report.ai.analysingPhoto"));
 
     try {
-      const imageBase64 = await fileToBase64(file);
-      const imageMimeType = file.type as ImageMimeType;
+      const compressed = await compressPhoto(file);
+      const imageBase64 = await fileToBase64(compressed);
+      const imageMimeType = (compressed.type || file.type) as ImageMimeType;
       const result = await requestClassification({
         description: draft.description || "Photo uploaded",
         imageBase64,
@@ -215,6 +216,40 @@ export function ReportForm() {
     }
   }
 
+  async function classifyFromTranscript(description: string) {
+    setAiLoading(true);
+    setAiNotice(t("report.ai.analysingVoice"));
+
+    try {
+      const result = await requestClassification({
+        description,
+        category: draft.category || undefined,
+        severity: draft.severity || undefined,
+      });
+      applyAiResult(result);
+      setAiNotice(null);
+    } catch {
+      applyAiResult(
+        classifyFallback({
+          description,
+          category: draft.category || undefined,
+          severity: draft.severity || undefined,
+        }),
+      );
+      setAiNotice(t("report.ai.fallbackNotice"));
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function applyTranscript(transcript: string) {
+    const description = draft.description
+      ? `${draft.description}\n\n${transcript}`.slice(0, DESCRIPTION_MAX)
+      : transcript.slice(0, DESCRIPTION_MAX);
+    updateDraft("description", description);
+    void classifyFromTranscript(description);
+  }
+
   function updateDraft<K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
@@ -226,55 +261,15 @@ export function ReportForm() {
     }));
   }
 
-  function errorsForStep(target: Step): ReportErrors {
-    const all = validateDraft(draft, photos.length > 0);
-    const result: ReportErrors = {};
-
-    if (target >= 1) {
-      if (all.category) result.category = all.category;
-      if (all.title) result.title = all.title;
-      if (all.description) result.description = all.description;
-      if (all.reporter) result.reporter = all.reporter;
-    }
-
-    if (target >= 2 && all.location) {
-      result.location = all.location;
-    }
-
-    return result;
-  }
-
-  function goNext() {
-    const stepErrors = errorsForStep(step);
-    setErrors(stepErrors);
-    if (Object.keys(stepErrors).length > 0) return;
-
-    if (step === 2) {
-      setStep(3);
-      void runClassification();
-      return;
-    }
-
-    setStep((current) => (current < 3 ? ((current + 1) as Step) : current));
-  }
-
-  function goBack() {
-    setErrors({});
-    setStep((current) => (current > 1 ? ((current - 1) as Step) : current));
-  }
-
   function addPhotos(files: FileList | File[]) {
     const incoming = Array.from(files);
     const hadNoPhotos = photos.length === 0;
     const next = [...photos];
-    const photoLimit = user ? MAX_PHOTOS : 1;
     let message: string | null = null;
 
     for (const file of incoming) {
-      if (next.length >= photoLimit) {
-        message = user
-          ? t("report.photos.limitSignedIn", { max: MAX_PHOTOS })
-          : t("report.photos.limitAnonymous");
+      if (next.length >= MAX_PHOTOS) {
+        message = t("report.photos.limit", { max: MAX_PHOTOS });
         break;
       }
 
@@ -328,25 +323,53 @@ export function ReportForm() {
         );
         setLocating(false);
       },
-      (cause) => {
+      (error) => {
         setLocationMessage(
-          cause.code === cause.PERMISSION_DENIED
+          error.code === error.PERMISSION_DENIED
             ? t("report.location.denied")
             : t("report.location.failed"),
         );
         setLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 10_000 },
     );
+  }
+
+  async function handleCaptureContinue() {
+    const description = draft.description.trim();
+    if (photos.length === 0 && description.length < DESCRIPTION_MIN) {
+      setErrors({
+        description: t("report.errors.details"),
+      });
+      return;
+    }
+
+    setErrors({});
+    if (!ai) {
+      await runClassification();
+    }
+    setStage("answer");
+  }
+
+  function handleLocationContinue() {
+    const locationError = validateCoordinates(draft.location.lat, draft.location.lng);
+    if (locationError) {
+      setErrors({ location: locationError });
+      return;
+    }
+    setErrors({});
+    setStage("confirm");
+  }
+
+  function goBack() {
+    const target = STAGE_BACK[stage];
+    if (target) setStage(target);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (step < 3) {
-      goNext();
-      return;
-    }
+    if (stage !== "confirm") return;
 
     setSubmitError(null);
     setConsentError(null);
@@ -379,31 +402,16 @@ export function ReportForm() {
     }
 
     setSubmitting(true);
+    setUploadStatus(t("report.upload.saving"));
 
     try {
       const incidentId = newIncidentId();
-      const photoUrls: string[] = [];
 
-      for (const [index, photo] of photos.entries()) {
-        setUploadStatus(
-          t("report.upload.photo", { current: index + 1, total: photos.length }),
-        );
-        const compressed = await compressPhoto(photo.file);
-        const url = await uploadIncidentPhoto(
-          incidentId,
-          compressed,
-          index,
-          Boolean(user),
-        );
-        photoUrls.push(url);
-      }
-
-      setUploadStatus(t("report.upload.saving"));
       await createIncident({
         incidentId,
         draft,
         ai: ai ?? undefined,
-        photoUrls,
+        photoUrls: [],
         reporterUid: user?.uid,
       });
 
@@ -415,7 +423,6 @@ export function ReportForm() {
 
       setSuccessId(incidentId);
       setSuccessAi(ai);
-      setStep(1);
     } catch (cause) {
       setSubmitError(
         cause instanceof Error ? cause.message : t("report.submit.genericError"),
@@ -437,7 +444,7 @@ export function ReportForm() {
     setSubmitError(null);
     setSuccessId(null);
     setSuccessAi(null);
-    setStep(1);
+    setStage("welcome");
     setAi(null);
     setAiNotice(null);
     setLocationMessage(null);
@@ -450,6 +457,8 @@ export function ReportForm() {
   if (!languageChosen) {
     return <LanguageGate onChoose={() => {}} />;
   }
+
+  const stageIndex = STAGE_ORDER.indexOf(stage);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
@@ -465,7 +474,7 @@ export function ReportForm() {
       </div>
 
       <div className="mt-8">
-        <StepIndicator step={step} />
+        <ProgressStrip stageIndex={stageIndex} />
       </div>
 
       {!isFirebaseConfigured ? (
@@ -479,75 +488,61 @@ export function ReportForm() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <form onSubmit={handleSubmit} noValidate>
           <Card className="p-5 sm:p-7">
-            <div key={step} className="animate-fade-in-up">
-            {step === 1 ? (
-              <DetailsStep
-                draft={draft}
-                errors={errors}
-                photoMessage={photoMessage}
-                photos={photos}
-                photoLimit={user ? MAX_PHOTOS : 1}
-                disabled={submitting}
-                onDraftChange={updateDraft}
-                onAddPhotos={addPhotos}
-                onRemovePhoto={removePhoto}
-              />
-            ) : null}
+            <div key={stage} className="animate-fade-in-up">
+              {stage === "welcome" ? <WelcomeStage language={language} /> : null}
 
-            {step === 2 ? (
-              <LocationStep
-                draft={draft}
-                errors={errors}
-                locating={locating}
-                locationMessage={locationMessage}
-                onLocationChange={updateLocation}
-                onUseMyLocation={useMyLocation}
-              />
-            ) : null}
+              {stage === "capture" ? (
+                <CaptureStage
+                  draft={draft}
+                  errors={errors}
+                  photoMessage={photoMessage}
+                  photos={photos}
+                  disabled={submitting}
+                  onDraftChange={updateDraft}
+                  onAddPhotos={addPhotos}
+                  onRemovePhoto={removePhoto}
+                  onTranscribed={applyTranscript}
+                />
+              ) : null}
 
-            {step === 3 ? (
-              <ReviewStep
-                draft={draft}
-                photos={photos}
-                ai={ai}
-                aiLoading={aiLoading}
-                aiNotice={aiNotice}
-                consent={consent}
-                consentError={consentError}
-                submitting={submitting}
-                uploadStatus={uploadStatus}
-                submitError={submitError}
-                onConsentChange={setConsent}
-                onApplyAI={() => {
-                  if (!ai) return;
-                  setDraft((current) => ({
-                    ...current,
-                    category: ai.category,
-                    severity: ai.severity,
-                  }));
-                }}
-                onReclassify={() => {
-                  setAi(null);
-                  void runClassification(true);
-                }}
-                onEditStep={(target) => setStep(target)}
-              />
-            ) : null}
+              {stage === "answer" ? (
+                <AnswerStage ai={ai} aiLoading={aiLoading} aiNotice={aiNotice} />
+              ) : null}
+
+              {stage === "location" ? (
+                <LocationStage
+                  draft={draft}
+                  errors={errors}
+                  locating={locating}
+                  locationMessage={locationMessage}
+                  onLocationChange={updateLocation}
+                  onUseMyLocation={useMyLocation}
+                />
+              ) : null}
+
+              {stage === "confirm" ? (
+                <ConfirmStage
+                  draft={draft}
+                  ai={ai}
+                  aiLoading={aiLoading}
+                  consent={consent}
+                  consentError={consentError}
+                  submitting={submitting}
+                  uploadStatus={uploadStatus}
+                  submitError={submitError}
+                  onDraftChange={updateDraft}
+                  onConsentChange={setConsent}
+                  onReclassify={() => {
+                    setAi(null);
+                    void runClassification(true);
+                  }}
+                />
+              ) : null}
             </div>
 
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-ink-100 pt-5">
               <div>
-                {step > 1 ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={goBack}
-                    disabled={submitting}
-                  >
-                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                    {t("report.buttons.back")}
-                  </Button>
-                ) : (
+                {stage === "welcome" ? (
                   <Link
                     href="/"
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 hover:text-teal-900"
@@ -555,19 +550,45 @@ export function ReportForm() {
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                     {t("report.buttons.cancel")}
                   </Link>
+                ) : (
+                  <Button type="button" variant="ghost" onClick={goBack} disabled={submitting}>
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                    {t("report.buttons.back")}
+                  </Button>
                 )}
               </div>
 
-              {step < 3 ? (
-                <Button type="submit" disabled={submitting}>
+              {stage === "welcome" ? (
+                <Button type="button" onClick={() => setStage("capture")}>
+                  {t("report.welcome.start")}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              ) : stage === "capture" ? (
+                <Button type="button" onClick={() => void handleCaptureContinue()} disabled={aiLoading}>
+                  {aiLoading ? (
+                    <>
+                      <Spinner className="h-4 w-4" />
+                      {aiNotice || t("report.ai.analysing")}
+                    </>
+                  ) : (
+                    <>
+                      {t("report.buttons.next")}
+                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </>
+                  )}
+                </Button>
+              ) : stage === "answer" ? (
+                <Button type="button" onClick={() => setStage("location")} disabled={aiLoading}>
+                  {t("report.buttons.next")}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              ) : stage === "location" ? (
+                <Button type="button" onClick={handleLocationContinue}>
                   {t("report.buttons.next")}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={submitting || aiLoading || !isFirebaseConfigured}
-                >
+                <Button type="submit" disabled={submitting || aiLoading || !isFirebaseConfigured}>
                   {submitting ? (
                     <>
                       <Spinner className="h-4 w-4" />
@@ -670,51 +691,22 @@ export function ReportForm() {
   );
 }
 
-function StepIndicator({ step }: { step: Step }) {
-  const { t } = useLanguage();
-
+function ProgressStrip({ stageIndex }: { stageIndex: number }) {
   return (
-    <ol className="mx-auto flex max-w-2xl items-center gap-2" aria-label="Report steps">
-      {STEPS.map((item, index) => {
-        const complete = step > item.number;
-        const active = step === item.number;
+    <ol className="mx-auto flex max-w-2xl items-center gap-2" aria-label="Report progress">
+      {STAGE_ORDER.map((item, index) => {
+        const complete = stageIndex > index;
+        const active = stageIndex === index;
 
         return (
-          <li key={item.number} className="flex flex-1 items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold",
-                  complete && "bg-brand-600 text-white",
-                  active && "bg-teal-900 text-white",
-                  !complete && !active && "bg-ink-100 text-ink-400",
-                )}
-                aria-current={active ? "step" : undefined}
-              >
-                {complete ? (
-                  <Check className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  item.number
-                )}
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-medium sm:text-sm",
-                  active ? "text-teal-900" : "text-ink-400",
-                )}
-              >
-                {t(item.key)}
-              </span>
-            </div>
-            {index < STEPS.length - 1 ? (
-              <span
-                className={cn(
-                  "h-px flex-1",
-                  complete ? "bg-brand-500" : "bg-ink-200",
-                )}
-                aria-hidden="true"
-              />
-            ) : null}
+          <li key={item} className="flex flex-1 items-center gap-2">
+            <span
+              className={cn(
+                "flex h-2.5 w-full items-center justify-center rounded-full transition-colors",
+                complete ? "bg-brand-600" : active ? "bg-brand-300" : "bg-ink-100",
+              )}
+              aria-hidden="true"
+            />
           </li>
         );
       })}
@@ -722,26 +714,44 @@ function StepIndicator({ step }: { step: Step }) {
   );
 }
 
-function DetailsStep({
+function WelcomeStage({ language }: { language: Language }) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-6 text-center">
+      <div className="flex justify-center">
+        <AudioGuide step="welcome" language={language} />
+      </div>
+      <div>
+        <h2 className="text-xl font-semibold text-teal-900">{t("report.welcome.title")}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-500">
+          {t("report.welcome.subtitle")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CaptureStage({
   draft,
   errors,
   photos,
   photoMessage,
-  photoLimit,
   disabled,
   onDraftChange,
   onAddPhotos,
   onRemovePhoto,
+  onTranscribed,
 }: {
   draft: ReportDraft;
   errors: ReportErrors;
   photos: PhotoItem[];
   photoMessage: string | null;
-  photoLimit: number;
   disabled: boolean;
   onDraftChange: <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => void;
   onAddPhotos: (files: FileList | File[]) => void;
   onRemovePhoto: (id: string) => void;
+  onTranscribed: (transcript: string) => void;
 }) {
   const { t, language } = useLanguage();
 
@@ -749,73 +759,40 @@ function DetailsStep({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-teal-900">{t("report.step1.title")}</h2>
-          <p className="mt-0.5 text-sm text-ink-500">{t("report.step1.subtitle")}</p>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.capture.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.capture.subtitle")}</p>
         </div>
-        <AudioGuide step={1} language={language} />
+        <AudioGuide step="capture" language={language} />
       </div>
 
-      <fieldset>
-        <legend className="text-sm font-medium text-ink-800">
-          {t("report.fields.category")} <span className="text-critical-500">*</span>
-        </legend>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          {INCIDENT_CATEGORIES.map((category) => {
-            const selected = draft.category === category.value;
-            return (
-              <label
-                key={category.value}
-                className={cn(
-                  "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm transition-colors",
-                  selected
-                    ? "border-brand-500 bg-brand-50 text-brand-800"
-                    : "border-ink-200 bg-white text-ink-700 hover:bg-ink-50",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="category"
-                  value={category.value}
-                  checked={selected}
-                  onChange={() => onDraftChange("category", category.value)}
-                  className="h-4 w-4 border-ink-300 text-brand-600 focus:ring-brand-500"
-                  disabled={disabled}
-                />
-                {t(`report.categories.${category.value}`)}
-              </label>
-            );
-          })}
+      <div>
+        <h3 className="text-sm font-semibold text-ink-800">{t("report.fields.voice")}</h3>
+        <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.voiceHint")}</p>
+        <div className="mt-3">
+          <VoiceRecorder onTranscribed={onTranscribed} disabled={disabled} />
         </div>
-        {errors.category ? (
-          <p role="alert" className="mt-2 text-xs font-medium text-critical-600">
-            {errors.category}
-          </p>
-        ) : null}
-      </fieldset>
+      </div>
 
-      <Field
-        label={t("report.fields.title")}
-        htmlFor="report-title"
-        hint={t("report.fields.titleHint")}
-        error={errors.title}
-      >
-        <Input
-          id="report-title"
-          value={draft.title}
-          onChange={(event) => onDraftChange("title", event.target.value.slice(0, 120))}
-          placeholder={t("report.fields.titlePlaceholder")}
-          disabled={disabled}
-          aria-invalid={Boolean(errors.title)}
-          aria-describedby={errors.title ? "report-title-error" : "report-title-hint"}
-        />
-      </Field>
+      <div>
+        <h3 className="text-sm font-semibold text-ink-800">{t("report.fields.photos")}</h3>
+        <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.photosHint")}</p>
+        <div className="mt-3">
+          <PhotoUploader
+            photos={photos}
+            onAddFiles={onAddPhotos}
+            onRemove={onRemovePhoto}
+            error={photoMessage ?? undefined}
+            disabled={disabled}
+            maxPhotos={MAX_PHOTOS}
+          />
+        </div>
+      </div>
 
       <Field
         label={t("report.fields.description")}
         htmlFor="report-description"
         hint={t("report.fields.descriptionHint", { min: DESCRIPTION_MIN })}
         error={errors.description}
-        required
       >
         <Textarea
           id="report-description"
@@ -824,7 +801,7 @@ function DetailsStep({
             onDraftChange("description", event.target.value.slice(0, DESCRIPTION_MAX))
           }
           placeholder={t("report.fields.descriptionPlaceholder")}
-          rows={6}
+          rows={5}
           disabled={disabled}
           aria-invalid={Boolean(errors.description)}
           aria-describedby={
@@ -835,73 +812,99 @@ function DetailsStep({
           {draft.description.length}/{DESCRIPTION_MAX}
         </div>
       </Field>
-
-      <div>
-        <h2 className="text-sm font-semibold text-ink-800">{t("report.fields.photos")}</h2>
-        <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.photosHint")}</p>
-        <div className="mt-3">
-          <PhotoUploader
-            photos={photos}
-            onAddFiles={onAddPhotos}
-            onRemove={onRemovePhoto}
-            error={photoMessage ?? undefined}
-            disabled={disabled}
-            maxPhotos={photoLimit}
-          />
-        </div>
-      </div>
-
-      <fieldset className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4">
-        <legend className="px-1 text-sm font-semibold text-ink-800">
-          {t("report.fields.yourDetails")}
-        </legend>
-        <p className="text-xs leading-5 text-ink-500">{t("report.fields.detailsHint")}</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <Field label={t("report.fields.name")} htmlFor="reporter-name">
-            <Input
-              id="reporter-name"
-              value={draft.reporter.name ?? ""}
-              onChange={(event) =>
-                onDraftChange("reporter", { ...draft.reporter, name: event.target.value.slice(0, 80) })
-              }
-              autoComplete="name"
-              disabled={disabled}
-            />
-          </Field>
-          <Field label={t("report.fields.phone")} htmlFor="reporter-phone">
-            <Input
-              id="reporter-phone"
-              type="tel"
-              value={draft.reporter.phone ?? ""}
-              onChange={(event) =>
-                onDraftChange("reporter", { ...draft.reporter, phone: event.target.value.slice(0, 30) })
-              }
-              autoComplete="tel"
-              placeholder="+256…"
-              disabled={disabled}
-            />
-          </Field>
-          <Field label={t("report.fields.email")} htmlFor="reporter-email" error={errors.reporter}>
-            <Input
-              id="reporter-email"
-              type="email"
-              value={draft.reporter.email ?? ""}
-              onChange={(event) =>
-                onDraftChange("reporter", { ...draft.reporter, email: event.target.value.slice(0, 120) })
-              }
-              autoComplete="email"
-              disabled={disabled}
-              aria-invalid={Boolean(errors.reporter)}
-              aria-describedby={errors.reporter ? "reporter-email-error" : undefined}
-            />
-          </Field>
-        </div>
-      </fieldset>
     </div>
   );
 }
 
-function LocationStep({
+function AnswerStage({
+  ai,
+  aiLoading,
+  aiNotice,
+}: {
+  ai: AIClassification | null;
+  aiLoading: boolean;
+  aiNotice: string | null;
+}) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.answer.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.answer.subtitle")}</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-teal-900">
+            <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
+            {t("report.ai.title")}
+          </h3>
+          {ai ? (
+            <Badge variant={ai.source === "gemini" ? "info" : "neutral"}>
+              {ai.source === "gemini" ? "Gemini" : t("report.ai.fallbackSource")}
+            </Badge>
+          ) : null}
+        </div>
+
+        {aiLoading ? (
+          <p className="mt-3 flex items-center gap-2 text-sm text-ink-500">
+            <Spinner className="h-4 w-4 text-brand-600" />
+            {t("report.ai.analysing")}
+          </p>
+        ) : ai ? (
+          <div className="mt-3 space-y-3">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <MiniFact label={t("report.ai.category")} value={t(`report.categories.${ai.category}`)} />
+              <MiniFact label={t("report.ai.severity")} value={SEVERITY_LABELS[ai.severity]} />
+              <MiniFact label={t("report.ai.urgency")} value={URGENCY_LABELS[ai.urgency]} />
+            </div>
+            <p className="text-sm leading-6 text-ink-700">{ai.summary}</p>
+            <p className="text-xs text-ink-500">
+              {Math.round(ai.confidence * 100)}% {t("report.ai.confidence")}.{" "}
+              {t("report.review.confidenceNote")}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-ink-500">{t("report.review.noSuggestion")}</p>
+        )}
+
+        {aiNotice ? <p className="mt-3 text-xs font-medium text-warning-600">{aiNotice}</p> : null}
+      </div>
+
+      <p className="text-xs text-ink-500">{t("report.answer.redo")}</p>
+
+      {ai?.severity === "critical" ? (
+        <div className="rounded-2xl border border-critical-300 bg-critical-50 p-4 space-y-3">
+          <p className="flex items-center gap-2 text-sm font-semibold text-critical-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t("report.warning.critical")}
+          </p>
+          <p className="text-sm text-critical-700">{t("report.warning.criticalBody")}</p>
+          <a
+            href="tel:112"
+            className="inline-flex items-center gap-2 rounded-lg bg-critical-600 px-4 py-2 text-sm font-semibold text-white hover:bg-critical-700"
+          >
+            <Phone className="h-4 w-4" aria-hidden="true" />
+            Call 112 — Emergency
+          </a>
+        </div>
+      ) : ai?.severity === "high" ? (
+        <div className="rounded-2xl border border-warning-300 bg-warning-50 p-4 space-y-3">
+          <p className="flex items-center gap-2 text-sm font-semibold text-warning-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t("report.warning.high")}
+          </p>
+          <p className="text-sm text-warning-700">{t("report.warning.highBody")}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function LocationStage({
   draft,
   errors,
   locating,
@@ -926,10 +929,10 @@ function LocationStep({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-teal-900">{t("report.step2.title")}</h2>
-          <p className="mt-0.5 text-sm text-ink-500">{t("report.step2.subtitle")}</p>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.locationStep.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.locationStep.subtitle")}</p>
         </div>
-        <AudioGuide step={2} language={language} />
+        <AudioGuide step="location" language={language} />
       </div>
 
       <LocationSearch
@@ -945,12 +948,7 @@ function LocationStep({
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onUseMyLocation}
-          disabled={locating}
-        >
+        <Button type="button" variant="outline" onClick={onUseMyLocation} disabled={locating}>
           {locating ? (
             <>
               <Spinner className="h-4 w-4" />
@@ -1055,95 +1053,42 @@ function LocationStep({
   );
 }
 
-function ReviewStep({
+function ConfirmStage({
   draft,
-  photos,
   ai,
   aiLoading,
-  aiNotice,
   consent,
   consentError,
   submitting,
   uploadStatus,
   submitError,
+  onDraftChange,
   onConsentChange,
-  onApplyAI,
   onReclassify,
-  onEditStep,
 }: {
   draft: ReportDraft;
-  photos: PhotoItem[];
   ai: AIClassification | null;
   aiLoading: boolean;
-  aiNotice: string | null;
   consent: boolean;
   consentError: string | null;
   submitting: boolean;
   uploadStatus: string | null;
   submitError: string | null;
+  onDraftChange: <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => void;
   onConsentChange: (value: boolean) => void;
-  onApplyAI: () => void;
   onReclassify: () => void;
-  onEditStep: (step: Step) => void;
 }) {
   const { t, language } = useLanguage();
-  const aiMatches =
-    ai !== null && ai.category === draft.category && ai.severity === draft.severity;
-
-  const isCritical = ai?.severity === "critical";
-  const isHigh = ai?.severity === "high";
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-teal-900">{t("report.step3.title")}</h2>
-          <p className="mt-0.5 text-sm text-ink-500">{t("report.step3.subtitle")}</p>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.confirmStep.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.confirmStep.subtitle")}</p>
         </div>
-        <AudioGuide step={3} language={language} aiSummary={ai?.summary} />
+        <AudioGuide step="confirm" language={language} />
       </div>
-
-      {/* AI severity warning for critical/high — shown before user submits */}
-      {isCritical ? (
-        <div className="rounded-2xl border border-critical-300 bg-critical-50 p-4 space-y-3">
-          <p className="flex items-center gap-2 text-sm font-semibold text-critical-800">
-            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {t("report.warning.critical")}
-          </p>
-          <p className="text-sm text-critical-700">{t("report.warning.criticalBody")}</p>
-          <div className="flex flex-wrap gap-2">
-            <a
-              href="tel:112"
-              className="inline-flex items-center gap-2 rounded-lg bg-critical-600 px-4 py-2 text-sm font-semibold text-white hover:bg-critical-700"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Call 112 — Emergency
-            </a>
-            <a
-              href="tel:+256000000000"
-              className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Call a DrainWatch Agent
-            </a>
-          </div>
-        </div>
-      ) : isHigh ? (
-        <div className="rounded-2xl border border-warning-300 bg-warning-50 p-4 space-y-3">
-          <p className="flex items-center gap-2 text-sm font-semibold text-warning-800">
-            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {t("report.warning.high")}
-          </p>
-          <p className="text-sm text-warning-700">{t("report.warning.highBody")}</p>
-          <a
-            href="tel:+256000000000"
-            className="inline-flex items-center gap-2 rounded-lg border border-warning-300 bg-white px-4 py-2 text-sm font-semibold text-warning-700 hover:bg-warning-50"
-          >
-            <Phone className="h-4 w-4" aria-hidden="true" />
-            Call a DrainWatch Agent
-          </a>
-        </div>
-      ) : null}
 
       <div className="rounded-2xl border border-ink-100">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 px-4 py-3">
@@ -1155,148 +1100,86 @@ function ReviewStep({
                 : t("report.review.categoryMissing")}
             </Badge>
           </div>
-          <button
-            type="button"
-            onClick={() => onEditStep(1)}
-            className="text-xs font-medium text-brand-700 hover:text-brand-800"
-          >
-            {t("report.review.editDetails")}
-          </button>
+          <Button type="button" size="sm" variant="ghost" onClick={onReclassify} disabled={submitting || aiLoading}>
+            {t("report.buttons.rerun")}
+          </Button>
         </div>
         <div className="space-y-4 px-4 py-4">
           <div>
-            <p className="text-sm font-medium text-ink-800">
-              {draft.title.trim() || t("report.review.titleFallback")}
-            </p>
             <p className="mt-1 whitespace-pre-line text-sm leading-6 text-ink-600">
               {draft.description}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-start justify-between gap-2 border-t border-ink-100 pt-3">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
-                {t("report.review.locationLabel")}
-              </p>
-              <p className="mt-0.5 text-sm text-ink-700">
-                {draft.location.address || draft.location.division || "Kampala"}
-              </p>
-              <p className="mt-0.5 font-mono text-xs text-ink-500">
-                {draft.location.lat !== null && draft.location.lng !== null
-                  ? formatCoordinates(draft.location.lat, draft.location.lng)
-                  : t("report.review.noCoordinates")}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onEditStep(2)}
-              className="text-xs font-medium text-brand-700 hover:text-brand-800"
-            >
-              {t("report.review.editLocation")}
-            </button>
+          <div className="border-t border-ink-100 pt-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
+              {t("report.review.locationLabel")}
+            </p>
+            <p className="mt-0.5 text-sm text-ink-700">
+              {draft.location.address || draft.location.division || "Kampala"}
+            </p>
+            <p className="mt-0.5 font-mono text-xs text-ink-500">
+              {draft.location.lat !== null && draft.location.lng !== null
+                ? formatCoordinates(draft.location.lat, draft.location.lng)
+                : t("report.review.noCoordinates")}
+            </p>
           </div>
 
-          <div className="grid gap-3 border-t border-ink-100 pt-3 sm:grid-cols-2">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
-                {t("report.review.reporterLabel")}
-              </p>
-              <p className="mt-0.5 text-sm text-ink-700">
-                {draft.reporter.name?.trim() ? draft.reporter.name : t("report.review.anonymous")}
-              </p>
-              {draft.reporter.phone ? (
-                <p className="text-xs text-ink-500">{draft.reporter.phone}</p>
-              ) : null}
-              {draft.reporter.email ? (
-                <p className="text-xs text-ink-500">{draft.reporter.email}</p>
-              ) : null}
-            </div>
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
-                {t("report.review.photosLabel")}
-              </p>
-              <p className="mt-0.5 text-sm text-ink-700">
-                {photos.length === 0
-                  ? t("report.review.noPhotos")
-                  : photos.length === 1
-                    ? t("report.review.photoReadyOne")
-                    : t("report.review.photoReadyMany", { count: photos.length })}
-              </p>
-              <p className="text-xs text-ink-500">{t("report.review.photosPublicNote")}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-teal-900">
-            <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
-            {t("report.ai.title")}
-          </h3>
           {ai ? (
-            <Badge variant={ai.source === "gemini" ? "info" : "neutral"}>
-              {ai.source === "gemini" ? "Gemini" : t("report.ai.fallbackSource")}
-            </Badge>
+            <div className="border-t border-ink-100 pt-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
+                {t("report.ai.title")}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-ink-700">{ai.summary}</p>
+            </div>
           ) : null}
         </div>
-
-        {aiLoading ? (
-          <p className="mt-3 flex items-center gap-2 text-sm text-ink-500">
-            <Spinner className="h-4 w-4 text-brand-600" />
-            {t("report.ai.analysing")}
-          </p>
-        ) : ai ? (
-          <div className="mt-3 space-y-3">
-            <div className="grid gap-2 sm:grid-cols-3">
-              <MiniFact
-                label={t("report.ai.category")}
-                value={t(`report.categories.${ai.category}`)}
-              />
-              <MiniFact label={t("report.ai.severity")} value={SEVERITY_LABELS[ai.severity]} />
-              <MiniFact label={t("report.ai.urgency")} value={URGENCY_LABELS[ai.urgency]} />
-            </div>
-            <p className="text-sm leading-6 text-ink-700">{ai.summary}</p>
-            <p className="text-xs text-ink-500">
-              {Math.round(ai.confidence * 100)}% {t("report.ai.confidence")}.{" "}
-              {t("report.review.confidenceNote")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={aiMatches ? "outline" : "primary"}
-                onClick={onApplyAI}
-                disabled={aiMatches || submitting}
-              >
-                {aiMatches ? (
-                  <>
-                    <Check className="h-4 w-4" aria-hidden="true" />
-                    {t("report.review.matches")}
-                  </>
-                ) : (
-                  t("report.buttons.useAISuggestion")
-                )}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={onReclassify}
-                disabled={submitting}
-              >
-                {t("report.buttons.rerun")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-ink-500">{t("report.review.noSuggestion")}</p>
-        )}
-
-        {aiNotice ? (
-          <p className="mt-3 text-xs font-medium text-warning-600">{aiNotice}</p>
-        ) : null}
       </div>
+
+      <fieldset className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4">
+        <legend className="px-1 text-sm font-semibold text-ink-800">
+          {t("report.fields.yourDetails")}
+        </legend>
+        <p className="text-xs leading-5 text-ink-500">{t("report.fields.detailsHint")}</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Field label={t("report.fields.name")} htmlFor="reporter-name">
+            <Input
+              id="reporter-name"
+              value={draft.reporter.name ?? ""}
+              onChange={(event) =>
+                onDraftChange("reporter", { ...draft.reporter, name: event.target.value.slice(0, 80) })
+              }
+              autoComplete="name"
+              disabled={submitting}
+            />
+          </Field>
+          <Field label={t("report.fields.phone")} htmlFor="reporter-phone">
+            <Input
+              id="reporter-phone"
+              type="tel"
+              value={draft.reporter.phone ?? ""}
+              onChange={(event) =>
+                onDraftChange("reporter", { ...draft.reporter, phone: event.target.value.slice(0, 30) })
+              }
+              autoComplete="tel"
+              placeholder="+256…"
+              disabled={submitting}
+            />
+          </Field>
+          <Field label={t("report.fields.email")} htmlFor="reporter-email">
+            <Input
+              id="reporter-email"
+              type="email"
+              value={draft.reporter.email ?? ""}
+              onChange={(event) =>
+                onDraftChange("reporter", { ...draft.reporter, email: event.target.value.slice(0, 120) })
+              }
+              autoComplete="email"
+              disabled={submitting}
+            />
+          </Field>
+        </div>
+      </fieldset>
 
       {submitError ? (
         <Alert variant="error" title={t("report.errors.submitTitle")}>
