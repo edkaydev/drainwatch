@@ -142,7 +142,7 @@ function parseStatusHistory(value: unknown, fallbackStatus: IncidentStatus): Sta
         status: record.status,
         at: asDate(record.at),
         by: asString(record.by) || null,
-        byName: asString(record.byName, "DrainWatch AI"),
+        byName: asString(record.byName, "DrainWatch"),
         note: asString(record.note) || undefined,
       },
     ];

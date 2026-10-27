@@ -23,7 +23,7 @@ export default function GlobalError({
             <AlertTriangle className="h-6 w-6" aria-hidden="true" />
           </span>
           <h1 className="mt-5 text-2xl font-semibold tracking-tight text-teal-900">
-            DrainWatch AI could not load
+            DrainWatch could not load
           </h1>
           <p className="mt-3 max-w-md text-sm leading-6 text-ink-500">
             A critical error interrupted the application. Retry to reload the
