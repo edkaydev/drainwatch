@@ -56,11 +56,11 @@ service cloud.firestore {
         && location.keys().hasAll(['lat', 'lng'])
         && location.keys().hasOnly(['lat', 'lng', 'address', 'division'])
         && location.lat is number
-        && location.lat >= 0.1
-        && location.lat <= 0.65
+        && location.lat >= -0.35
+        && location.lat <= 0.85
         && location.lng is number
-        && location.lng >= 32.3
-        && location.lng <= 32.85
+        && location.lng >= 31.7
+        && location.lng <= 33.1
         && (!location.keys().hasAny(['address']) || (location.address is string && location.address.size() <= 200))
         && (!location.keys().hasAny(['division']) || (location.division is string && location.division.size() <= 80));
     }

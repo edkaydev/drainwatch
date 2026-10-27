@@ -46,7 +46,7 @@ export function LocationPicker({
         container: containerRef.current,
         style: MAP_STYLE_URL,
         center: [start.lng, start.lat],
-        zoom: valueRef.current ? 14 : 12,
+        zoom: valueRef.current ? 14 : 10,
         maxBounds: KAMPALA_BOUNDS,
         attributionControl: false,
       });
