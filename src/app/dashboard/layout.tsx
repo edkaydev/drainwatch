@@ -8,7 +8,7 @@ export const instant = false;
 export const metadata: Metadata = {
   title: {
     default: "Operations Dashboard",
-    template: "%s — DrainWatch AI Operations",
+    template: "%s — DrainWatch Operations",
   },
   robots: {
     index: false,

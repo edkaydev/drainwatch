@@ -20,12 +20,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "DrainWatch AI — Smarter Drainage, Safer Kampala",
-    template: "%s — DrainWatch AI",
+    default: "DrainWatch — Smarter Drainage, Safer Kampala",
+    template: "%s — DrainWatch",
   },
   description:
-    "AI-assisted drainage hazard reporting and hotspot intelligence for a flood-resilient Kampala.",
-  applicationName: "DrainWatch AI",
+    "Community-powered drainage hazard reporting and explainable hotspot intelligence for a flood-resilient Kampala.",
+  applicationName: "DrainWatch",
   keywords: [
     "drainage",
     "Kampala",
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
-    siteName: "DrainWatch AI",
-    title: "DrainWatch AI — Smarter Drainage, Safer Kampala",
+    siteName: "DrainWatch",
+    title: "DrainWatch — Smarter Drainage, Safer Kampala",
     description:
       "Report drainage hazards, surface hotspots, and help Kampala prioritise flood-resilience work.",
     url: "/",
@@ -52,9 +52,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "DrainWatch AI — Smarter Drainage, Safer Kampala",
+    title: "DrainWatch — Smarter Drainage, Safer Kampala",
     description:
-      "AI-assisted drainage hazard reporting and hotspot intelligence for a flood-resilient Kampala.",
+      "Community-powered drainage hazard reporting and explainable hotspot intelligence for a flood-resilient Kampala.",
     images: ["/drainwatch-hero-kampala.jpg"],
   },
   robots: {
