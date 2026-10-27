@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore, type RefObject } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import type { Language } from "@/lib/i18n";
+import { SpeakingWaveform } from "./speaking-waveform";
 import { cn } from "@/lib/utils";
 
 const MUTED_KEY = "drainwatch:muted";
@@ -49,9 +50,16 @@ function writeMuted(next: boolean) {
   mutedListeners.forEach((listener) => listener());
 }
 
-function playRecording(audioRef: RefObject<HTMLAudioElement | null>, url: string) {
+function playRecording(
+  audioRef: RefObject<HTMLAudioElement | null>,
+  url: string,
+  onPlayingChange: (playing: boolean) => void,
+) {
   audioRef.current?.pause();
   const audio = new Audio(url);
+  audio.onplay = () => onPlayingChange(true);
+  audio.onpause = () => onPlayingChange(false);
+  audio.onended = () => onPlayingChange(false);
   audioRef.current = audio;
   void audio.play().catch(() => {
     // Autoplay can be blocked before the first user interaction; the mute
@@ -70,12 +78,13 @@ export function AudioGuide({
 }) {
   const muted = useSyncExternalStore(subscribeMuted, readMuted, getBooleanServerSnapshot);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
 
   const url = recordingUrl(language, step);
 
   useEffect(() => {
     if (!url || muted) return;
-    playRecording(audioRef, url);
+    playRecording(audioRef, url, setPlaying);
 
     const current = audioRef;
     return () => current.current?.pause();
@@ -89,7 +98,7 @@ export function AudioGuide({
     if (next) {
       audioRef.current?.pause();
     } else if (url) {
-      playRecording(audioRef, url);
+      playRecording(audioRef, url, setPlaying);
     }
   }
 
@@ -100,16 +109,17 @@ export function AudioGuide({
       aria-pressed={muted}
       aria-label={muted ? "Unmute and play audio guide" : "Mute audio guide"}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 bg-white shadow-sm transition-colors hover:bg-brand-50",
+        "flex h-9 items-center gap-2 rounded-full border border-ink-200 bg-white px-2.5 shadow-sm transition-colors hover:bg-brand-50",
         muted ? "text-ink-500" : "text-brand-600",
         className,
       )}
     >
       {muted ? (
-        <VolumeX className="h-4 w-4" aria-hidden="true" />
+        <VolumeX className="h-4 w-4 shrink-0" aria-hidden="true" />
       ) : (
-        <Volume2 className="h-4 w-4" aria-hidden="true" />
+        <Volume2 className="h-4 w-4 shrink-0" aria-hidden="true" />
       )}
+      {!muted ? <SpeakingWaveform active={playing} className="h-3.5" /> : null}
     </button>
   );
 }

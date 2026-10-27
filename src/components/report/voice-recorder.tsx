@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Mic, RotateCcw, Square } from "lucide-react";
 import { useLanguage } from "@/components/layout/language-provider";
-import { Spinner } from "@/components/ui/feedback";
+import { SpeakingWaveform } from "@/components/ui/speaking-waveform";
 import { requestTranscription } from "@/lib/incidents";
 import {
   audioBaseType,
@@ -90,6 +90,12 @@ export function VoiceRecorder({
 
   async function startRecording() {
     setError(null);
+
+    if (!window.isSecureContext) {
+      setError(t("report.voice.insecureContext"));
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -122,8 +128,15 @@ export function VoiceRecorder({
           return next;
         });
       }, 1000);
-    } catch {
-      setError(t("report.voice.micDenied"));
+    } catch (cause) {
+      const name = cause instanceof DOMException ? cause.name : "";
+      if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        setError(t("report.voice.micNotFound"));
+      } else if (name === "NotReadableError" || name === "TrackStartError") {
+        setError(t("report.voice.micInUse"));
+      } else {
+        setError(t("report.voice.micDenied"));
+      }
     }
   }
 
@@ -198,12 +211,15 @@ export function VoiceRecorder({
           <button
             type="button"
             onClick={stopRecording}
-            className="mx-auto flex h-12 w-12 animate-pulse items-center justify-center rounded-2xl bg-critical-600 text-white shadow-sm transition-colors hover:bg-critical-700"
+            className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-critical-600 text-white shadow-sm transition-colors hover:bg-critical-700"
             aria-label={t("report.voice.stop")}
           >
             <Square className="h-5 w-5" aria-hidden="true" fill="currentColor" />
           </button>
-          <p className="mt-3 text-sm font-medium text-ink-800">
+          <div className="mt-3 flex items-center justify-center gap-2 text-critical-600">
+            <SpeakingWaveform active className="h-4" />
+          </div>
+          <p className="mt-1 text-sm font-medium text-ink-800">
             {t("report.voice.recording", { seconds: elapsed })}
           </p>
           <p className="mt-1 text-xs text-ink-400">{t("report.voice.tapToStop")}</p>
@@ -212,7 +228,7 @@ export function VoiceRecorder({
 
       {status === "transcribing" ? (
         <div className="flex flex-col items-center gap-2">
-          <Spinner className="h-6 w-6 text-brand-600" />
+          <SpeakingWaveform active className="h-6 text-brand-600" />
           <p className="text-sm font-medium text-ink-800">{t("report.voice.transcribing")}</p>
         </div>
       ) : null}
