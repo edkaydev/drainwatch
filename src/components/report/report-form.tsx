@@ -606,7 +606,7 @@ export function ReportForm() {
               📞 Need help? Call us
             </h2>
             <p className="mt-2 text-xs leading-5 text-ink-500">
-              Can&apos;t submit the form? Call the DrainWatch operations centre directly.
+              Cannot submit? A DrainWatch agent will help you report by phone.
             </p>
             <div className="mt-3 flex flex-col gap-2">
               <a
@@ -616,18 +616,18 @@ export function ReportForm() {
                 📞 112 — Emergency Services
               </a>
               <a
-                href="tel:+256417103100"
+                href="tel:+256000000000"
                 className="flex items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-900 hover:bg-ink-50"
               >
-                📞 KCCA Helpline
+                📞 Call a DrainWatch Agent
               </a>
               <a
-                href="https://wa.me/256417103100?text=I+want+to+report+a+drainage+hazard+in+Kampala"
+                href="https://wa.me/256000000000?text=I+need+to+report+a+drainage+hazard"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-800 hover:bg-green-100"
               >
-                💬 WhatsApp KCCA
+                💬 WhatsApp DrainWatch
               </a>
             </div>
           </Card>
@@ -1143,10 +1143,10 @@ function ReviewStep({
               📞 Call 112 — Emergency
             </a>
             <a
-              href="tel:+256417103100"
+              href="tel:+256000000000"
               className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
             >
-              📞 Call KCCA Helpline
+              📞 Call a DrainWatch Agent
             </a>
           </div>
         </div>
@@ -1160,10 +1160,10 @@ function ReviewStep({
             The AI has assessed this as a high severity hazard. Keep bystanders away and submit as soon as it is safe to do so.
           </p>
           <a
-            href="tel:+256417103100"
+            href="tel:+256000000000"
             className="inline-flex items-center gap-2 rounded-lg border border-warning-300 bg-white px-4 py-2 text-sm font-semibold text-warning-700 hover:bg-warning-50"
           >
-            📞 Call KCCA Helpline
+            📞 Call a DrainWatch Agent
           </a>
         </div>
       ) : null}
@@ -1439,10 +1439,10 @@ function SuccessPanel({
               </a>
             ) : null}
             <a
-              href="tel:+256417103100"
+              href="tel:+256000000000"
               className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
             >
-              📞 Call KCCA Helpline
+              📞 Call a DrainWatch Agent
             </a>
           </div>
         </div>
