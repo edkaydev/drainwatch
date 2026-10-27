@@ -9,7 +9,7 @@ service cloud.firestore {
     function isStaff() {
       return signedIn()
         && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
-        && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.active != false;
+        && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.get('active', true) != false;
     }
 
     function validCategory(value) {
