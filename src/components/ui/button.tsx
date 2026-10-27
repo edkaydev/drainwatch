@@ -27,7 +27,7 @@ type ButtonProps = BaseProps & ComponentPropsWithoutRef<"button">;
 type LinkButtonProps = BaseProps & ComponentPropsWithoutRef<typeof Link>;
 
 const base =
-  "inline-flex items-center justify-center rounded-full font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap";
+  "inline-flex items-center justify-center rounded-full font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 whitespace-nowrap";
 
 export function Button({
   variant = "primary",
