@@ -21,6 +21,7 @@ import { PhotoUploader, type PhotoItem } from "./photo-uploader";
 import { SupportRequestCard } from "./support-request-card";
 import { LanguageGate } from "./language-gate";
 import { LocationPicker } from "@/components/map/location-picker";
+import { LocationSearch } from "./location-search";
 import { Card } from "@/components/ui/card";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { Badge } from "@/components/ui/badge";
@@ -478,6 +479,7 @@ export function ReportForm() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <form onSubmit={handleSubmit} noValidate>
           <Card className="p-5 sm:p-7">
+            <div key={step} className="animate-fade-in-up">
             {step === 1 ? (
               <DetailsStep
                 draft={draft}
@@ -531,6 +533,7 @@ export function ReportForm() {
                 onEditStep={(target) => setStep(target)}
               />
             ) : null}
+            </div>
 
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-ink-100 pt-5">
               <div>
@@ -928,6 +931,12 @@ function LocationStep({
         </div>
         <AudioGuide step={2} language={language} />
       </div>
+
+      <LocationSearch
+        onSelect={(result) =>
+          onLocationChange({ lat: result.lat, lng: result.lng, address: result.label })
+        }
+      />
 
       <LocationPicker
         value={point}
@@ -1365,11 +1374,11 @@ function SuccessPanel({
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:py-24">
+    <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:py-24 animate-fade-in-up">
       <div className="flex justify-center">
         <AudioGuide step="success" language={language} />
       </div>
-      <span className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success-500">
+      <span className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success-500 animate-scale-in">
         <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
       </span>
       <h1 className="mt-6 text-3xl font-semibold tracking-tight text-teal-900">

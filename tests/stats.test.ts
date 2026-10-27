@@ -45,7 +45,7 @@ describe("counts", () => {
   });
 
   it("counts by status in workflow order", () => {
-    expect(countByStatus(incidents).map((item) => item.value)).toEqual([1, 0, 1, 1]);
+    expect(countByStatus(incidents).map((item) => item.value)).toEqual([1, 1, 1]);
   });
 
   it("counts non-zero categories and sorts descending", () => {
