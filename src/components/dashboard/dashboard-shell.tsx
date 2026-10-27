@@ -87,7 +87,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
           <Link
             href="/dashboard"
-            aria-label="DrainWatch AI dashboard"
+            aria-label="DrainWatch dashboard"
             onClick={() => setOpen(false)}
           >
             <Logo dark />
@@ -165,7 +165,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wide text-ink-400">
-              DrainWatch AI
+              DrainWatch
             </p>
             <h1 className="truncate text-sm font-semibold text-teal-900">
               {pageTitle(pathname)}

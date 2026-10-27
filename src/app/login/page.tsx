@@ -80,7 +80,7 @@ export default function LoginPage() {
     return (
       <main id="main-content" className="min-h-screen bg-background">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
-          <Link href="/" aria-label="DrainWatch AI home">
+          <Link href="/" aria-label="DrainWatch home">
             <Logo />
           </Link>
         </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-brand-600/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-teal-700/40 blur-3xl" />
 
-        <Link href="/" className="relative" aria-label="DrainWatch AI home">
+        <Link href="/" className="relative" aria-label="DrainWatch home">
           <Logo dark />
         </Link>
 
@@ -147,7 +147,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="mt-6 text-2xl font-semibold tracking-tight text-teal-900 lg:mt-0">
-            Sign in to DrainWatch AI
+            Sign in to DrainWatch
           </h1>
           <p className="mt-1.5 text-sm text-ink-500">
             Use the staff account created for you by an administrator.
