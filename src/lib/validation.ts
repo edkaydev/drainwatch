@@ -21,11 +21,24 @@ export const ACCEPTED_PHOTO_TYPES = [
   "image/webp",
 ] as const;
 
+export const ACCEPTED_IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+export type ImageMimeType = (typeof ACCEPTED_IMAGE_MIME_TYPES)[number];
+export const MAX_IMAGE_BASE64_LENGTH = 2 * 1024 * 1024;
+
+export function isImageMimeType(value: unknown): value is ImageMimeType {
+  return (ACCEPTED_IMAGE_MIME_TYPES as readonly unknown[]).includes(value);
+}
+
+// Expanded to cover Kampala, Nkozi/UMU (~72 km SW), and surrounding greater Uganda area.
 const KAMPALA_BOUNDS = {
-  minLat: 0.1,
-  maxLat: 0.65,
-  minLng: 32.3,
-  maxLng: 32.85,
+  minLat: -0.35,
+  maxLat: 0.85,
+  minLng: 31.7,
+  maxLng: 33.1,
 };
 
 export type DraftLocation = {
@@ -110,7 +123,7 @@ export function validateReporter(reporter: ReporterInfo): string | null {
   return null;
 }
 
-export function validateDraft(draft: ReportDraft): ReportErrors {
+export function validateDraft(draft: ReportDraft, hasPhotos = false): ReportErrors {
   const errors: ReportErrors = {};
 
   if (!isIncidentCategory(draft.category)) {
@@ -122,7 +135,8 @@ export function validateDraft(draft: ReportDraft): ReportErrors {
   }
 
   const description = cleanText(draft.description);
-  if (description.length < DESCRIPTION_MIN) {
+  const descriptionMin = hasPhotos ? 0 : DESCRIPTION_MIN;
+  if (description.length < descriptionMin) {
     errors.description = `Add at least ${DESCRIPTION_MIN} characters so staff can act on the report.`;
   } else if (description.length > DESCRIPTION_MAX) {
     errors.description = `Keep the description under ${DESCRIPTION_MAX} characters.`;
@@ -153,6 +167,8 @@ export type ClassifyRequest = {
   description: string;
   category?: IncidentCategory;
   severity?: Severity;
+  imageBase64?: string;
+  imageMimeType?: ImageMimeType;
 };
 
 export function parseClassifyRequest(value: unknown): ClassifyRequest | null {
@@ -164,10 +180,22 @@ export function parseClassifyRequest(value: unknown): ClassifyRequest | null {
   const description = cleanText(record.description);
   if (description.length < 5 || description.length > 4000) return null;
 
+  let imageBase64: string | undefined;
+  let imageMimeType: ImageMimeType | undefined;
+
+  if (typeof record.imageBase64 === "string" && record.imageBase64.length > 0) {
+    if (record.imageBase64.length > MAX_IMAGE_BASE64_LENGTH) return null;
+    if (!isImageMimeType(record.imageMimeType)) return null;
+    imageBase64 = record.imageBase64;
+    imageMimeType = record.imageMimeType;
+  }
+
   return {
     description,
     category: isIncidentCategory(record.category) ? record.category : undefined,
     severity: isSeverity(record.severity) ? record.severity : undefined,
+    imageBase64,
+    imageMimeType,
   };
 }
 

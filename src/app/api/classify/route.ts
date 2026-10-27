@@ -6,7 +6,7 @@ import {
   isUrgency,
   type AIClassification,
 } from "@/lib/types";
-import { parseClassifyRequest } from "@/lib/validation";
+import { MAX_IMAGE_BASE64_LENGTH, parseClassifyRequest } from "@/lib/validation";
 
 const CATEGORY_VALUES = INCIDENT_CATEGORIES.map((category) => category.value);
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
@@ -20,7 +20,8 @@ Rules:
 - Category must be one of: ${CATEGORY_VALUES.join(", ")}.
 - Severity: low = cosmetic or minor nuisance; medium = routine blockage or damage; high = significant flooding, danger, or blocked access; critical = collapse, injury risk, sewage exposure, or an immediate threat to life.
 - Confidence is a number from 0 to 1 reflecting how clearly the text supports the classification.
-- Summary must be under 240 characters, factual, and note what staff should verify.`;
+- Summary must be under 240 characters, factual, and note what staff should verify.
+- If an image is provided, use it as the primary evidence. Describe what you see in the image in the summary.`;
 
 const responseSchema = {
   type: "OBJECT",
@@ -51,6 +52,10 @@ type GeminiResponse = {
 const rateLimit = new Map<string, number[]>();
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS = 20;
+
+const TEXT_BODY_LIMIT = 32_000;
+// Room for a base64 photo plus the JSON wrapper around it.
+const IMAGE_BODY_LIMIT = MAX_IMAGE_BASE64_LENGTH + 50_000;
 
 function clientKey(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -130,16 +135,26 @@ export async function POST(request: Request) {
   }
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > 32_000) {
+  if (Number.isFinite(contentLength) && contentLength > IMAGE_BODY_LIMIT) {
+    return json({ error: "The request body is too large." }, 413);
+  }
+
+  let raw: string;
+  try {
+    raw = await request.text();
+  } catch {
+    return json({ error: "Send a JSON body with a description." }, 400);
+  }
+
+  // Only a request that actually carries a photo gets the larger image budget;
+  // a text-only report never needs more than a few KB.
+  const bodyLimit = raw.includes('"imageBase64"') ? IMAGE_BODY_LIMIT : TEXT_BODY_LIMIT;
+  if (raw.length > bodyLimit) {
     return json({ error: "The request body is too large." }, 413);
   }
 
   let payload: unknown;
   try {
-    const raw = await request.text();
-    if (raw.length > 32_000) {
-      return json({ error: "The request body is too large." }, 413);
-    }
     payload = JSON.parse(raw);
   } catch {
     return json({ error: "Send a JSON body with a description." }, 400);
@@ -167,6 +182,14 @@ export async function POST(request: Request) {
     "</report>",
   ].join("\n");
 
+  const parts: Array<Record<string, unknown>> = [];
+  if (input.imageBase64 && input.imageMimeType) {
+    parts.push({
+      inline_data: { mime_type: input.imageMimeType, data: input.imageBase64 },
+    });
+  }
+  parts.push({ text: userText });
+
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
@@ -183,7 +206,7 @@ export async function POST(request: Request) {
           contents: [
             {
               role: "user",
-              parts: [{ text: userText }],
+              parts,
             },
           ],
           generationConfig: {
