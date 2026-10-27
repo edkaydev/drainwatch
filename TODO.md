@@ -1,4 +1,4 @@
-# DrainWatch AI — Implementation Status
+# DrainWatch — Implementation Status
 
 Last updated: 2026-10-27
 
