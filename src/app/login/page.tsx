@@ -36,6 +36,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<"signin" | "reset">("signin");
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
     } catch (cause) {
+      setErrorKind("signin");
       setLocalError(cause instanceof Error ? cause.message : "Sign-in failed.");
     } finally {
       setPending(false);
@@ -62,9 +64,10 @@ export default function LoginPage() {
   async function handleReset() {
     setLocalError(null);
     setResetMessage(null);
+    setErrorKind("reset");
 
     if (!email.trim()) {
-      setLocalError("Enter your staff email first, then request a reset link.");
+      setLocalError("Enter your staff email address to request a password reset.");
       return;
     }
 
@@ -112,7 +115,7 @@ export default function LoginPage() {
             Staff operations
           </p>
           <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight">
-            Triage drainage hazards with a clear, auditable workflow.
+            Review reports, confirm details, and track next steps.
           </h1>
           <p className="mt-4 text-teal-200">
             Sign in to review incoming reports, verify AI suggestions, update
@@ -155,7 +158,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
             {localError || error ? (
-              <Alert variant="error" title="Could not sign in">
+              <Alert
+                variant="error"
+                title={errorKind === "reset" ? "Could not request reset" : "Could not sign in"}
+              >
                 {localError || error}
               </Alert>
             ) : null}
@@ -230,14 +236,13 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-8 text-xs leading-5 text-ink-400">
-            Public reporting does not require an account. Staff accounts are
-            managed in the Firebase Console, and dashboard access is enforced by
-            Firestore security rules.
+            Need staff access? Ask your DrainWatch administrator for an
+            account. Public reporting does not require sign-in.
           </p>
 
           <div className="mt-6 border-t border-ink-100 pt-6">
             <LinkButton href="/report" variant="outline" className="w-full">
-              Report an incident instead
+              Report a drainage problem instead
             </LinkButton>
           </div>
         </div>
