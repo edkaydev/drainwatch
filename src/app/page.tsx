@@ -59,7 +59,7 @@ export default function Home() {
       {/* Hero */}
       <section className="mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
+          <div className="animate-fade-in-up">
             <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-teal-900 sm:text-5xl">
               {t("home.hero.title1")}
               <br />
@@ -79,15 +79,21 @@ export default function Home() {
             </div>
           </div>
 
-          <HeroGraphic t={t} />
+          <div className="animate-fade-in-up [animation-delay:150ms]">
+            <HeroGraphic t={t} />
+          </div>
         </div>
       </section>
 
       {/* Feature grid */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, title, description }) => (
-            <Card key={title} className="p-6">
+          {FEATURES.map(({ icon: Icon, title, description }, index) => (
+            <Card
+              key={title}
+              className="animate-fade-in-up p-6 transition-shadow hover:shadow-md"
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
                 <Icon className="h-5 w-5" />
               </span>

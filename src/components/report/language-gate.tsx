@@ -20,8 +20,8 @@ export function LanguageGate({ onChoose }: { onChoose: (language: Language) => v
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 py-10 text-center sm:px-6">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+    <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 py-10 text-center sm:px-6 animate-fade-in-up">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 animate-scale-in">
         <Languages className="h-6 w-6" aria-hidden="true" />
       </span>
       <h1 className="mt-5 text-2xl font-semibold tracking-tight text-teal-900 sm:text-3xl">
@@ -36,7 +36,7 @@ export function LanguageGate({ onChoose }: { onChoose: (language: Language) => v
               type="button"
               onClick={() => choose(option.value)}
               className={cn(
-                "flex h-28 w-full flex-col items-center justify-center gap-2 rounded-2xl text-lg font-semibold text-teal-900 transition-colors hover:bg-brand-50 active:bg-brand-100",
+                "flex h-28 w-full flex-col items-center justify-center gap-2 rounded-2xl text-lg font-semibold text-teal-900 transition-all duration-200 hover:scale-[1.02] hover:bg-brand-50 active:scale-[0.98] active:bg-brand-100",
               )}
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-sm font-bold uppercase text-brand-700">
