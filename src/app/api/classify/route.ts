@@ -1,5 +1,11 @@
 import { classifyFallback } from "@/lib/classifier";
 import {
+  GEMINI_MODEL,
+  requestGeminiJson,
+  stripCodeFence,
+  type GeminiContent,
+} from "@/lib/gemini";
+import {
   INCIDENT_CATEGORIES,
   isIncidentCategory,
   isSeverity,
@@ -9,7 +15,7 @@ import {
 import { MAX_IMAGE_BASE64_LENGTH, parseClassifyRequest } from "@/lib/validation";
 
 const CATEGORY_VALUES = INCIDENT_CATEGORIES.map((category) => category.value);
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = GEMINI_MODEL;
 
 const SYSTEM_PROMPT = `You are a drainage hazard triage assistant for Kampala, Uganda.
 Classify a public incident report for staff review. You are advisory only: never claim an action was taken.
@@ -24,29 +30,21 @@ Rules:
 - If an image is provided, use it as the primary evidence. Describe what you see in the image in the summary.`;
 
 const responseSchema = {
-  type: "OBJECT",
+  type: "object",
   properties: {
-    category: { type: "STRING", enum: CATEGORY_VALUES },
-    severity: { type: "STRING", enum: ["low", "medium", "high", "critical"] },
-    urgency: { type: "STRING", enum: ["low", "normal", "high", "immediate"] },
+    category: { type: "string", enum: CATEGORY_VALUES },
+    severity: { type: "string", enum: ["low", "medium", "high", "critical"] },
+    urgency: { type: "string", enum: ["low", "normal", "high", "immediate"] },
     summary: {
-      type: "STRING",
+      type: "string",
       description: "Under 240 characters. Factual summary and what staff should verify.",
     },
     confidence: {
-      type: "NUMBER",
+      type: "number",
       description: "Number between 0 and 1.",
     },
   },
   required: ["category", "severity", "urgency", "summary", "confidence"],
-};
-
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{ text?: string }>;
-    };
-  }>;
 };
 
 const rateLimit = new Map<string, number[]>();
@@ -95,7 +93,7 @@ function parseGemini(text: string): AIClassification | null {
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(stripCodeFence(text));
   } catch {
     return null;
   }
@@ -182,64 +180,30 @@ export async function POST(request: Request) {
     "</report>",
   ].join("\n");
 
-  const parts: Array<Record<string, unknown>> = [];
+  const content: GeminiContent[] = [];
   if (input.imageBase64 && input.imageMimeType) {
-    parts.push({
-      inline_data: { mime_type: input.imageMimeType, data: input.imageBase64 },
+    content.push({
+      type: "image",
+      data: input.imageBase64,
+      mime_type: input.imageMimeType,
     });
   }
-  parts.push({ text: userText });
+  content.push({ type: "text", text: userText });
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts,
-            },
-          ],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: "application/json",
-            responseSchema,
-          },
-        }),
-        signal: AbortSignal.timeout(12_000),
-        cache: "no-store",
-      },
-    );
+  const result = await requestGeminiJson({
+    apiKey,
+    model: MODEL,
+    systemInstruction: SYSTEM_PROMPT,
+    input: content,
+    schema: responseSchema,
+    temperature: 0.1,
+  });
 
-    if (!response.ok) {
-      console.error(`Gemini classification failed with status ${response.status}`);
-      return json(classifyFallback(input));
-    }
-
-    const data = (await response.json()) as GeminiResponse;
-    const text = data.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
-
-    if (!text) return json(classifyFallback(input));
-
-    const classification = parseGemini(text);
-    return json(classification ?? classifyFallback(input));
-  } catch (cause) {
-    console.error(
-      "Gemini classification request errored:",
-      cause instanceof Error ? cause.message : "unknown error",
-    );
+  if (!result.ok) {
+    console.error(`Gemini classification failed: ${result.reason}`);
     return json(classifyFallback(input));
   }
+
+  const classification = parseGemini(result.text);
+  return json(classification ?? classifyFallback(input));
 }
