@@ -16,21 +16,21 @@ const en = {
   "nav.about": "About",
   "nav.insights": "Insights",
   "nav.contact": "Contact",
-  "nav.report": "Report an Incident",
+  "nav.report": "Report a drainage problem",
 
   "pwa.install.title": "Install DrainWatch",
-  "pwa.install.body": "Add it to your home screen for one-tap access, even with a weak connection.",
+  "pwa.install.body": "Add DrainWatch to your home screen for quick access.",
   "pwa.install.cta": "Install",
   "pwa.install.dismiss": "Dismiss",
 
   "report.badge": "Public incident report",
-  "report.pageTitle": "Report a drainage hazard",
+  "report.pageTitle": "Report a drainage problem",
   "report.pageSubtitle":
     "Your phone and email stay private; the location, type of problem, and how serious it is may appear on the public map. Photos and voice recordings are only used by the AI and are never kept.",
 
-  "report.welcome.title": "Let's report this hazard",
+  "report.welcome.title": "Tell us what's happening",
   "report.welcome.subtitle":
-    "Record a voice message, take a photo, or type a description — whatever's easiest. Our AI looks at it and tells our team what's wrong.",
+    "Choose a photo, voice message, or written description. DrainWatch may suggest a category for your team to review.",
   "report.welcome.start": "Start",
 
   "report.capture.title": "What have you found?",
@@ -62,7 +62,7 @@ const en = {
   "report.fields.descriptionPlaceholder":
     "Describe the hazard, how long it has been there, and what it is affecting.",
   "report.fields.photos": "Photos (optional)",
-  "report.fields.photosHint": "A clear photo helps our team check the problem faster.",
+  "report.fields.photosHint": "A clear photo helps AI suggest a category. It is used only for that and is never saved.",
   "report.fields.voice": "Or describe it by voice (optional)",
   "report.fields.voiceHint": "Record a short message in English, Luganda, or Swahili. We transcribe it into the description below and never keep the recording.",
   "report.voice.record": "Record",
@@ -105,7 +105,7 @@ const en = {
   "report.location.denied": "Location permission was denied. Drop a pin on the map instead.",
   "report.location.failed": "Could not get your location. Drop a pin on the map instead.",
   "report.location.serviceArea":
-    "Only reports inside the Kampala service area can be submitted. If the pin is slightly off, drag it rather than leaving it outside the city.",
+    "Only reports inside the Kampala and Nkozi service area can be submitted. If the pin is slightly off, drag it rather than leaving it outside that area.",
   "report.location.searchPlaceholder": "Search for a place…",
   "report.location.searching": "Searching…",
   "report.location.searchNoResults": "No matches found. Try a different search, or drop a pin manually.",
@@ -153,7 +153,6 @@ const en = {
   "report.success.severityWord": "severity",
   "report.success.categoryLabel": "Category",
   "report.success.urgencyLabel": "Urgency",
-  "report.success.confidenceLabel": "Confidence",
   "report.success.urgentCritical":
     "This looks very dangerous. If someone is at risk right now, call emergency services (112) first.",
   "report.success.urgentHigh":
@@ -176,13 +175,13 @@ const en = {
   "report.ai.urgency": "Urgency",
   "report.ai.analysingPhoto": "Looking at your photo…",
   "report.ai.analysingVoice": "Reading your voice report…",
-  "report.ai.fallbackSource": "Basic check (no AI)",
+  "report.ai.badge": "AI suggestion",
   "report.ai.fallbackNotice":
     "AI is not available right now. Showing a basic check instead.",
 
   "report.errors.location": "Location needed",
-  "report.errors.details":
-    "Some details still need attention. Go back and complete the highlighted fields.",
+  "report.errors.details": "Some details still need attention before sending.",
+  "report.errors.descriptionTooShort": "Describe what you found in at least {min} characters.",
   "report.errors.submitTitle": "Could not submit",
 
   "report.submit.notConfigured": "Reporting is not connected to Firebase in this deployment.",
@@ -237,21 +236,20 @@ const en = {
   "home.hero.title1": "Smarter Drainage.",
   "home.hero.title2": "Safer Kampala.",
   "home.hero.subtitle":
-    "AI helps detect blocked drains and flooding, so the city knows where to fix problems first.",
-  "home.hero.cta1": "Report a Problem",
-  "home.hero.cta2": "See the Map",
-  "home.hero.cta3": "Report by Voice",
-  "home.hero.hotspotDetected": "Problem Detected",
-  "home.hero.highRisk": "High Risk",
+    "Report blocked drains or flooding in Kampala and Nkozi. Our operations team reviews every report and tracks recurring locations.",
+  "home.hero.cta1": "Report a drainage problem",
+  "home.hero.cta3": "Report by voice",
+  "home.hero.hotspotDetected": "Demo example",
+  "home.hero.highRisk": "High severity",
 
-  "home.feature1.title": "Report a Problem",
-  "home.feature1.desc": "Take a photo and drop a pin — done in three steps.",
-  "home.feature2.title": "See What is Happening",
-  "home.feature2.desc": "Find the worst-affected spots and how often they flood.",
-  "home.feature3.title": "Fix the Right Places First",
-  "home.feature3.desc": "Focus help where it is needed most.",
-  "home.feature4.title": "Build a Safer City",
-  "home.feature4.desc": "A cleaner, safer, more flood-ready Kampala and Nkozi.",
+  "home.feature1.title": "Report a drainage problem",
+  "home.feature1.desc": "Share a photo, voice message, or short description, then add the location.",
+  "home.feature2.title": "See reported problems",
+  "home.feature2.desc": "The operations team reviews reports by location to find where issues recur.",
+  "home.feature3.title": "Help teams prioritize review",
+  "home.feature3.desc": "Recurring and severe locations are surfaced for the team to focus on first.",
+  "home.feature4.title": "Support clearer drainage reporting",
+  "home.feature4.desc": "A consistent way to report and track drainage problems across Kampala and Nkozi.",
 
   "home.score1": "How often — how many times the same spot has been reported",
   "home.score2": "How serious — worse problems get a higher score",
@@ -261,24 +259,23 @@ const en = {
   "home.about.label": "How it works",
   "home.about.title": "Turning reports into action",
   "home.about.body":
-    "DrainWatch turns community reports into a clear score that shows city teams which drains to fix first — saving time and protecting lives.",
+    "DrainWatch groups reports and scores locations by repeat reports, severity, recency, and unresolved reports. Teams use the score to guide review.",
   "home.about.photoCaption":
     "Every report starts with someone on the ground — a photo, a location, and a few words.",
 
-  "home.map.label": "Live map",
-  "home.map.title": "See drainage problems across Kampala and Nkozi",
-  "home.map.body": "View reported problems, find the worst spots, and track what is being fixed.",
-  "home.map.cta": "Open Map",
+  "home.map.label": "Hotspot intelligence",
+  "home.map.title": "Helping teams prioritize where to respond first",
+  "home.map.body":
+    "Our operations team reviews recurring reports by location, severity, and status across Kampala and Nkozi to decide where to focus next.",
 
   "home.contact.title": "Want to use DrainWatch in your area?",
   "home.contact.body": "Get in touch and we will show you how it works.",
   "home.contact.cta": "Contact us",
 
   "footer.tagline":
-    "AI helps spot drainage problems so Kampala can fix them faster and stay safer from floods.",
+    "DrainWatch helps people report drainage problems and helps service teams see where issues recur.",
   "footer.product": "Product",
   "footer.project": "Project",
-  "footer.links.map": "Hotspot Map",
   "footer.links.dashboard": "Operations Dashboard",
   "footer.copyright":
     "© 2026 DrainWatch — a hackathon project for Kampala, Uganda. Demo data is clearly labeled and does not represent real-world outcomes.",
@@ -346,18 +343,18 @@ const lg: Record<TranslationKey, string> = {
   "nav.about": "Ku Ffe",
   "nav.insights": "Okutegeera",
   "nav.contact": "Tukwatagane",
-  "nav.report": "Wayo Lipooti",
+  "nav.report": "Wayo akabi k'omudumu",
 
   "pwa.install.title": "Teeka DrainWatch",
-  "pwa.install.body": "Gisse ku sirini yo esooka olyoke ogikozese mangu, ne ku netwaka ennafu.",
+  "pwa.install.body": "Gatta DrainWatch ku sirini yo esooka olyoke ogikozese mangu.",
   "pwa.install.cta": "Teeka",
   "pwa.install.dismiss": "Ggalawo",
 
   "report.badge": "Lipooti y'olukale",
-  "report.pageTitle": "Wayo Lipooti ku Akabi k'Omudumu",
-  "report.welcome.title": "Ka tuwe lipooti ku kabi kano",
+  "report.pageTitle": "Wayo akabi k'omudumu",
+  "report.welcome.title": "Tutegeeze ekigenda mu maaso",
   "report.welcome.subtitle":
-    "Rekoda obubaka mu ddoboozi, kuba ekifaananyi, oba wandiika ebikwata ku nsonga — kyonna ekyangu gyoli. AI yaffe ekikebera n'etegeeza abakozi baffe ekizibu.",
+    "Londa ekifaananyi, obubaka mu ddoboozi, oba ebigambo byo. DrainWatch eyinza okuwa ekika, abakozi ne bakikebera.",
   "report.welcome.start": "Tandika",
 
   "report.capture.title": "Olabye ki?",
@@ -391,7 +388,7 @@ const lg: Record<TranslationKey, string> = {
   "report.fields.descriptionPlaceholder":
     "Nnyonnyola akabi, akaberawo, n'ekyo ke kakosa.",
   "report.fields.photos": "Ebifaananyi (si bya wandiika)",
-  "report.fields.photosHint": "Ekifaananyi ekirungi kiyamba abakozi okukakasa akabi mangu.",
+  "report.fields.photosHint": "Ekifaananyi ekirungi kiyamba AI okulonda ekika. Kikozesebwa kwekyo kyokka era tekikuumibwa.",
   "report.fields.voice": "Oba n'Eddoboozi (si kya wandiika)",
   "report.fields.voiceHint": "Yogera obubaka obumpi mu Lungereza, Oluganda, oba Kiswahili. Tukifuula mu bigambo wansi, tetukuuma ddoboozi.",
   "report.voice.record": "Rekoda",
@@ -432,7 +429,7 @@ const lg: Record<TranslationKey, string> = {
   "report.location.denied": "Olukusa lw'ekifo lugaanibbwa. Teeka akabonero ku maapu.",
   "report.location.failed": "Tetusobodde kufuna kifo kyo. Teeka akabonero ku maapu.",
   "report.location.serviceArea":
-    "Lipooti ezisobola okusindikibwa zokka eziri munda mu Kampala. Akabonero bwe kaba katali mu kifo ekituufu, kasembeze.",
+    "Lipooti ezisobola okusindikibwa zokka eziri munda mu Kampala ne Nkozi. Akabonero bwe kaba katali mu kifo ekituufu, kasembeze.",
   "report.location.searchPlaceholder": "Nonya ekifo…",
   "report.location.searching": "Nnoonya…",
   "report.location.searchNoResults": "Tewali kifo kizuuliddwa. Gezaako okunoonya endala, oba teeka akabonero ku mukono.",
@@ -478,7 +475,6 @@ const lg: Record<TranslationKey, string> = {
   "report.success.severityWord": "obukuufu",
   "report.success.categoryLabel": "Ekika",
   "report.success.urgencyLabel": "Bwangu",
-  "report.success.confidenceLabel": "Obukakafu",
   "report.success.urgentCritical":
     "Kino kirabika ng'akabi ka maanyi. Bwe wabaawo akabi ku bulamu, kubiriza abayambi (112) amangu.",
   "report.success.urgentHigh":
@@ -501,11 +497,12 @@ const lg: Record<TranslationKey, string> = {
   "report.ai.urgency": "Bwangu",
   "report.ai.analysingPhoto": "Nkebera ekifaananyi…",
   "report.ai.analysingVoice": "Nsoma ripoota yo ey'eddoboozi…",
-  "report.ai.fallbackSource": "Magezi agatali ga AI",
-  "report.ai.fallbackNotice": "Gemini tekolagana kaakano, kyokka tulaze magezi agatali ga AI.",
+  "report.ai.badge": "Magezi ga AI",
+  "report.ai.fallbackNotice": "AI tekolagana kaakano, kyokka tulaze magezi agatali ga AI.",
 
   "report.errors.location": "Ekifo kyetaagisa",
-  "report.errors.details": "Ebimu tebinnamala. Ddayo olabe ebifo ebirina ensobi.",
+  "report.errors.details": "Ebimu tebinnamala nga tonnasindika.",
+  "report.errors.descriptionTooShort": "Nnyonnyola ky'olabye n'obubonero obutasukka wansi wa {min}.",
   "report.errors.submitTitle": "Tetusobodde kusindika",
 
   "report.submit.notConfigured": "Okuwaayo tekukwataganye ne Firebase mu kifo kino.",
@@ -559,21 +556,20 @@ const lg: Record<TranslationKey, string> = {
   "home.hero.title1": "Emidumu Egya Ngeri.",
   "home.hero.title2": "Kampala Eya Mbeera.",
   "home.hero.subtitle":
-    "AI eyamba okulabirira emidumu egyaziyiziddwa n'amazzi agabuutikira, okwagala ekibuga kitegeere ebifo ebyetaaga okuyambibwa okusooka.",
-  "home.hero.cta1": "Wayo Akabi",
-  "home.hero.cta2": "Laba Maapu",
-  "home.hero.cta3": "Wayo n'Eddoboozi",
-  "home.hero.hotspotDetected": "Akabi Kazunziddwa",
-  "home.hero.highRisk": "Obutaabika Obungi",
+    "Wayo akabi k'omudumu oguziyiziddwa oba amazzi agabuutikira mu Kampala ne Nkozi. Abakozi baffe bakebera buli lipooti era balondoola ebifo ebiddiŋŋana.",
+  "home.hero.cta1": "Wayo akabi k'omudumu",
+  "home.hero.cta3": "Wayo n'eddoboozi",
+  "home.hero.hotspotDetected": "Eky'okulabirako",
+  "home.hero.highRisk": "Obutaabika obungi",
 
-  "home.feature1.title": "Wayo Akabi",
-  "home.feature1.desc": "Fotografa era teeka akabonero — ebitendera bisatu.",
-  "home.feature2.title": "Laba Ekigendawo",
-  "home.feature2.desc": "Nonya ebifo ebizibu era emirundi egisinga okubaawo.",
-  "home.feature3.title": "Yambamu Ebifo Ebikyamu Okusooka",
-  "home.feature3.desc": "Tereka obuyambi awo kyetaagisibwa nnyo.",
-  "home.feature4.title": "Sengeka Ekibuga Ekikuumi",
-  "home.feature4.desc": "Kampala ne Nkozi ezikendeera amazzi n'okubeera bulungi.",
+  "home.feature1.title": "Wayo akabi k'omudumu",
+  "home.feature1.desc": "Gatta ekifaananyi, obubaka mu ddoboozi, oba ebigambo ebimpi, oluvannyuma oyongereko ekifo.",
+  "home.feature2.title": "Laba lipooti ezawayiddwa",
+  "home.feature2.desc": "Abakozi bakebera lipooti nga basinziira ku kifo okuzuula we wabaawo ebizibu emirundi mingi.",
+  "home.feature3.title": "Yamba abakozi okulonda eky'okusooka",
+  "home.feature3.desc": "Ebifo ebiddiŋŋana era ebizibu ennyo bye bisooka okulabibwa abakozi.",
+  "home.feature4.title": "Wagira okuwayo lipooti ez'emidumu obulungi",
+  "home.feature4.desc": "Engeri emu ey'okuwayo n'okulondoola ebizibu by'emidumu mu Kampala ne Nkozi.",
 
   "home.score1": "Emirundi — emirundi emeka eyo ekifo kinnazunzibwako",
   "home.score2": "Obukuufu — ebizibu ebibi birina amanye amangi",
@@ -583,24 +579,23 @@ const lg: Record<TranslationKey, string> = {
   "home.about.label": "Engeri ekikola",
   "home.about.title": "Okkyusa lipooti mu bikolwa",
   "home.about.body":
-    "DrainWatch ekkyusa lipooti ez'olukale mu amanye amangu agalagira tiimu y'ekibuga emidumu gw'oyinza okusaasula okusooka — okusaasula ebiseera n'okuwonya abantu.",
+    "DrainWatch ekuŋŋaanya lipooti n'okuwa ebifo amanye okusinziira ku mirundi, obukuufu, obupya, n'ebizibu ebitannakolebwako. Abakozi bakozesa amanye okulonda ekya kukeberako okusooka.",
   "home.about.photoCaption":
     "Lipooti buli esooka n'omuntu ku ttaka — ekifaananyi, ekifo, n'ebigambo bimbi.",
 
-  "home.map.label": "Maapu ey'amangu",
-  "home.map.title": "Laba ebizibu by'emidumu mu Kampala ne Nkozi",
-  "home.map.body": "Laba ebizibu ebyawayiddwako lipooti, nonya ebifo ebizibu, era kebera ekiyambibwa.",
-  "home.map.cta": "Ggulawo Maapu",
+  "home.map.label": "Amagezi g'ebifo ebiddiŋŋana",
+  "home.map.title": "Okuyamba abakozi okulonda we basooka okukola",
+  "home.map.body":
+    "Abakozi baffe bakebera lipooti ezaddiŋŋana nga basinziira ku kifo, obukuufu, n'embeera mu Kampala ne Nkozi okulonda we basooka okukola.",
 
   "home.contact.title": "Oyagala kukozesa DrainWatch mu kitundu kyo?",
   "home.contact.body": "Tukwatagane era tujja kukunyonyola engeri ekikola.",
   "home.contact.cta": "Tukwatagane",
 
   "footer.tagline":
-    "AI eyamba okuzuula ebizibu by'emidumu olyoke Kampala ekyusibwe mangu era ekuume obulungi okuva ku mazzi agabuutikira.",
+    "DrainWatch eyamba abantu okuwayo ebizibu by'emidumu era eyamba abakozi okulaba we ebizibu biddiŋŋana.",
   "footer.product": "Ebiweebwa",
   "footer.project": "Pulojekiti",
-  "footer.links.map": "Maapu y'Ebizibu",
   "footer.links.dashboard": "Dashboard y'Abakozi",
   "footer.copyright":
     "© 2026 DrainWatch — pulojekiti ya hackathon eya Kampala, Uganda. Ebikwata ku kulaga byogerwa era tebikiikirira bivaamu bya mazima.",
