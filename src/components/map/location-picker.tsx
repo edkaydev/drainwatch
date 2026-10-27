@@ -4,7 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 import type { Marker } from "maplibre-gl";
 import { KAMPALA_CENTER } from "@/lib/types";
-import { KAMPALA_BOUNDS, MAP_STYLE_URL } from "@/lib/map-style";
+import { KAMPALA_BOUNDS, loadMapLibre, MAP_STYLE_URL } from "@/lib/map-style";
 import { cn } from "@/lib/utils";
 
 type Point = { lat: number; lng: number };
@@ -37,7 +37,7 @@ export function LocationPicker({
     let cancelled = false;
 
     async function initialise() {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (cancelled || !containerRef.current) return;
 
       maplibreRef.current = maplibre;
