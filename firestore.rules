@@ -286,7 +286,7 @@ service cloud.firestore {
     }
 
     match /publicIncidents/{incidentId} {
-      allow read: if true;
+      allow read: if isStaff();
       allow create: if validPublicCreate(incidentId);
       allow update: if isStaff()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
