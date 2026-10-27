@@ -59,9 +59,9 @@ import { cn } from "@/lib/utils";
 type Step = 1 | 2 | 3;
 
 const STEPS = [
-  { number: 1, label: "Details" },
-  { number: 2, label: "Location" },
-  { number: 3, label: "Review" },
+  { number: 1, key: "report.steps.details" },
+  { number: 2, key: "report.steps.location" },
+  { number: 3, key: "report.steps.review" },
 ] as const;
 
 const LAST_REPORT_KEY = "drainwatch:last-report";
@@ -170,7 +170,7 @@ export function ReportForm() {
           severity: draft.severity || undefined,
         }),
       );
-      setAiNotice("Gemini is unavailable, so a rule-based suggestion is shown instead.");
+      setAiNotice(t("report.ai.fallbackNotice"));
     } finally {
       setAiLoading(false);
     }
@@ -198,7 +198,7 @@ export function ReportForm() {
           severity: draft.severity || undefined,
         }),
       );
-      setAiNotice("Gemini is unavailable, so a rule-based suggestion is shown instead.");
+      setAiNotice(t("report.ai.fallbackNotice"));
     } finally {
       setAiLoading(false);
     }
@@ -263,8 +263,8 @@ export function ReportForm() {
     for (const file of incoming) {
       if (next.length >= photoLimit) {
         message = user
-          ? `You can attach up to ${MAX_PHOTOS} photos.`
-          : "Anonymous reports include one cover photo. Sign in to attach more.";
+          ? t("report.photos.limitSignedIn", { max: MAX_PHOTOS })
+          : t("report.photos.limitAnonymous");
         break;
       }
 
@@ -300,7 +300,7 @@ export function ReportForm() {
 
   function useMyLocation() {
     if (!("geolocation" in navigator)) {
-      setLocationMessage("This browser does not support geolocation. Drop a pin instead.");
+      setLocationMessage(t("report.location.geoUnsupported"));
       return;
     }
 
@@ -314,15 +314,15 @@ export function ReportForm() {
           lng: position.coords.longitude,
         });
         setLocationMessage(
-          `Location captured to about ${Math.round(position.coords.accuracy)} m. Adjust the pin if needed.`,
+          t("report.location.captured", { meters: Math.round(position.coords.accuracy) }),
         );
         setLocating(false);
       },
       (cause) => {
         setLocationMessage(
           cause.code === cause.PERMISSION_DENIED
-            ? "Location permission was denied. Drop a pin on the map instead."
-            : "Could not get your location. Drop a pin on the map instead.",
+            ? t("report.location.denied")
+            : t("report.location.failed"),
         );
         setLocating(false);
       },
@@ -349,19 +349,19 @@ export function ReportForm() {
     }
 
     if (!consent) {
-      setConsentError("Confirm that the report is accurate and may be shown publicly.");
+      setConsentError(t("report.consentError"));
       return;
     }
 
     if (!isFirebaseConfigured) {
-      setSubmitError("Reporting is not connected to Firebase in this deployment.");
+      setSubmitError(t("report.submit.notConfigured"));
       return;
     }
 
     try {
       const previous = Number(localStorage.getItem(LAST_REPORT_KEY) ?? 0);
       if (previous && Date.now() - previous < SUBMISSION_COOLDOWN_MS) {
-        setSubmitError("A report was just submitted from this browser. Wait a minute before sending another.");
+        setSubmitError(t("report.submit.cooldown"));
         return;
       }
     } catch {
@@ -376,7 +376,7 @@ export function ReportForm() {
 
       for (const [index, photo] of photos.entries()) {
         setUploadStatus(
-          `Uploading photo ${index + 1} of ${photos.length}…`,
+          t("report.upload.photo", { current: index + 1, total: photos.length }),
         );
         const compressed = await compressPhoto(photo.file);
         const url = await uploadIncidentPhoto(
@@ -388,7 +388,7 @@ export function ReportForm() {
         photoUrls.push(url);
       }
 
-      setUploadStatus("Saving your report…");
+      setUploadStatus(t("report.upload.saving"));
       await createIncident({
         incidentId,
         draft,
@@ -408,9 +408,7 @@ export function ReportForm() {
       setStep(1);
     } catch (cause) {
       setSubmitError(
-        cause instanceof Error
-          ? cause.message
-          : "The report could not be submitted. Check your connection and try again.",
+        cause instanceof Error ? cause.message : t("report.submit.genericError"),
       );
     } finally {
       setSubmitting(false);
@@ -445,7 +443,7 @@ export function ReportForm() {
       <div className="mx-auto max-w-2xl text-center">
         <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700">
           <FileWarning className="h-3.5 w-3.5" aria-hidden="true" />
-          Public incident report
+          {t("report.badge")}
         </span>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-teal-900 sm:text-4xl">
           {t("report.pageTitle")}
@@ -459,9 +457,8 @@ export function ReportForm() {
 
       {!isFirebaseConfigured ? (
         <div className="mx-auto mt-6 max-w-3xl">
-          <Alert variant="warning" title="Reporting is not connected">
-            Firebase environment variables are missing, so submissions cannot be
-            saved. The form stays available so the flow can be reviewed.
+          <Alert variant="warning" title={t("report.notConnected.title")}>
+            {t("report.notConnected.body")}
           </Alert>
         </div>
       ) : null}
@@ -559,7 +556,7 @@ export function ReportForm() {
                   {submitting ? (
                     <>
                       <Spinner className="h-4 w-4" />
-                      {uploadStatus || "Submitting…"}
+                      {uploadStatus || t("report.upload.submitting")}
                     </>
                   ) : (
                     <>
@@ -577,20 +574,20 @@ export function ReportForm() {
           <Card className="p-5">
             <h2 className="flex items-center gap-2 font-semibold text-teal-900">
               <ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden="true" />
-              What happens next
+              {t("report.sidebar.nextTitle")}
             </h2>
             <ol className="mt-3 space-y-3 text-sm text-ink-600">
               <li className="flex gap-2">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">1</span>
-                The report is saved privately for staff review.
+                {t("report.sidebar.next1")}
               </li>
               <li className="flex gap-2">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">2</span>
-                An AI suggestion is attached, but a person decides whether to use it.
+                {t("report.sidebar.next2")}
               </li>
               <li className="flex gap-2">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">3</span>
-                Staff triage the incident and update its status.
+                {t("report.sidebar.next3")}
               </li>
             </ol>
           </Card>
@@ -598,23 +595,51 @@ export function ReportForm() {
           <Card className="border-warning-500/20 bg-warning-50/40 p-5">
             <h2 className="flex items-center gap-2 font-semibold text-warning-600">
               <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-              Stay safe
+              {t("report.sidebar.safeTitle")}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-ink-600">
-              Do not enter floodwater, open manholes, or damaged drains. Report
-              from a safe distance. For an immediate emergency, contact local
-              emergency services first.
+            <p className="mt-2 text-sm leading-6 text-ink-600">{t("report.sidebar.safeBody")}</p>
+          </Card>
+
+          {/* Call centre card — always visible */}
+          <Card className="p-5">
+            <h2 className="flex items-center gap-2 font-semibold text-teal-900">
+              📞 Need help? Call us
+            </h2>
+            <p className="mt-2 text-xs leading-5 text-ink-500">
+              Can&apos;t submit the form? Call the DrainWatch operations centre directly.
             </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <a
+                href="tel:112"
+                className="flex items-center justify-center gap-2 rounded-lg bg-critical-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-critical-700"
+              >
+                📞 112 — Emergency Services
+              </a>
+              <a
+                href="tel:+256417103100"
+                className="flex items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-900 hover:bg-ink-50"
+              >
+                📞 KCCA Helpline
+              </a>
+              <a
+                href="https://wa.me/256417103100?text=I+want+to+report+a+drainage+hazard+in+Kampala"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-800 hover:bg-green-100"
+              >
+                💬 WhatsApp KCCA
+              </a>
+            </div>
           </Card>
 
           {user ? (
             <Card className="p-5">
-              <p className="text-xs text-ink-400">Signed in as</p>
+              <p className="text-xs text-ink-400">{t("report.sidebar.signedInAs")}</p>
               <p className="mt-1 truncate text-sm font-medium text-ink-800">
                 {user.email}
               </p>
               <p className="mt-2 text-xs leading-5 text-ink-500">
-                This report will be linked to your staff account.
+                {t("report.sidebar.linkedAccount")}
               </p>
             </Card>
           ) : null}
@@ -625,6 +650,8 @@ export function ReportForm() {
 }
 
 function StepIndicator({ step }: { step: Step }) {
+  const { t } = useLanguage();
+
   return (
     <ol className="mx-auto flex max-w-2xl items-center gap-2" aria-label="Report steps">
       {STEPS.map((item, index) => {
@@ -655,7 +682,7 @@ function StepIndicator({ step }: { step: Step }) {
                   active ? "text-teal-900" : "text-ink-400",
                 )}
               >
-                {item.label}
+                {t(item.key)}
               </span>
             </div>
             {index < STEPS.length - 1 ? (
@@ -794,14 +821,14 @@ function DetailsStep({
       <Field
         label={t("report.fields.title")}
         htmlFor="report-title"
-        hint="Optional. We will generate one from the category and location if left blank."
+        hint={t("report.fields.titleHint")}
         error={errors.title}
       >
         <Input
           id="report-title"
           value={draft.title}
           onChange={(event) => onDraftChange("title", event.target.value.slice(0, 120))}
-          placeholder="e.g. Blocked culvert flooding Nakawa market road"
+          placeholder={t("report.fields.titlePlaceholder")}
           disabled={disabled}
           aria-invalid={Boolean(errors.title)}
           aria-describedby={errors.title ? "report-title-error" : "report-title-hint"}
@@ -811,7 +838,7 @@ function DetailsStep({
       <Field
         label={t("report.fields.description")}
         htmlFor="report-description"
-        hint={`At least ${DESCRIPTION_MIN} characters. Mention landmarks, water flow, and any immediate danger.`}
+        hint={t("report.fields.descriptionHint", { min: DESCRIPTION_MIN })}
         error={errors.description}
         required
       >
@@ -821,7 +848,7 @@ function DetailsStep({
           onChange={(event) =>
             onDraftChange("description", event.target.value.slice(0, DESCRIPTION_MAX))
           }
-          placeholder="Describe the hazard, how long it has been there, and what it is affecting."
+          placeholder={t("report.fields.descriptionPlaceholder")}
           rows={6}
           disabled={disabled}
           aria-invalid={Boolean(errors.description)}
@@ -836,9 +863,7 @@ function DetailsStep({
 
       <div>
         <h2 className="text-sm font-semibold text-ink-800">{t("report.fields.photos")}</h2>
-        <p className="mt-0.5 text-xs text-ink-500">
-          A clear photo helps staff verify the hazard faster.
-        </p>
+        <p className="mt-0.5 text-xs text-ink-500">{t("report.fields.photosHint")}</p>
         <div className="mt-3">
           <PhotoUploader
             photos={photos}
@@ -855,10 +880,7 @@ function DetailsStep({
         <legend className="px-1 text-sm font-semibold text-ink-800">
           {t("report.fields.yourDetails")}
         </legend>
-        <p className="text-xs leading-5 text-ink-500">
-          Only staff can see this. It is never shown on the public map. Leave it
-          blank to report anonymously.
-        </p>
+        <p className="text-xs leading-5 text-ink-500">{t("report.fields.detailsHint")}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Field label={t("report.fields.name")} htmlFor="reporter-name">
             <Input
@@ -1105,16 +1127,45 @@ function ReviewStep({
 
       {/* AI severity warning for critical/high — shown before user submits */}
       {isCritical ? (
-        <Alert variant="error" title={t("report.warning.critical")}>
-          This report has been assessed as critical severity. If there is
-          immediate danger to life, contact emergency services (112) before
-          submitting.
-        </Alert>
+        <div className="rounded-2xl border border-critical-300 bg-critical-50 p-4 space-y-3">
+          <p className="flex items-center gap-2 text-sm font-semibold text-critical-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t("report.warning.critical")}
+          </p>
+          <p className="text-sm text-critical-700">
+            This report has been assessed as critical severity. If there is immediate danger to life, call emergency services before submitting.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="tel:112"
+              className="inline-flex items-center gap-2 rounded-lg bg-critical-600 px-4 py-2 text-sm font-semibold text-white hover:bg-critical-700"
+            >
+              📞 Call 112 — Emergency
+            </a>
+            <a
+              href="tel:+256417103100"
+              className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
+            >
+              📞 Call KCCA Helpline
+            </a>
+          </div>
+        </div>
       ) : isHigh ? (
-        <Alert variant="warning" title={t("report.warning.high")}>
-          The AI has assessed this as a high severity hazard. Keep bystanders
-          away and submit as soon as it is safe to do so.
-        </Alert>
+        <div className="rounded-2xl border border-warning-300 bg-warning-50 p-4 space-y-3">
+          <p className="flex items-center gap-2 text-sm font-semibold text-warning-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t("report.warning.high")}
+          </p>
+          <p className="text-sm text-warning-700">
+            The AI has assessed this as a high severity hazard. Keep bystanders away and submit as soon as it is safe to do so.
+          </p>
+          <a
+            href="tel:+256417103100"
+            className="inline-flex items-center gap-2 rounded-lg border border-warning-300 bg-white px-4 py-2 text-sm font-semibold text-warning-700 hover:bg-warning-50"
+          >
+            📞 Call KCCA Helpline
+          </a>
+        </div>
       ) : null}
 
       <div className="rounded-2xl border border-ink-100">
@@ -1371,13 +1422,29 @@ function SuccessPanel({
 
       {/* Emergency warning for critical/high */}
       {isUrgent ? (
-        <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-critical-300 bg-critical-50 p-4 text-left">
+        <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-critical-300 bg-critical-50 p-4 text-left space-y-3">
           <p className="flex items-start gap-2 text-sm font-semibold text-critical-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             {isCritical
-              ? "This looks like a critical hazard. If there is immediate danger to life, call emergency services (112) first."
+              ? "This looks like a critical hazard. If there is immediate danger to life, call emergency services first."
               : "This looks like a serious hazard. Keep bystanders away and report to local authorities if needed."}
           </p>
+          <div className="flex flex-wrap gap-2">
+            {isCritical ? (
+              <a
+                href="tel:112"
+                className="inline-flex items-center gap-2 rounded-lg bg-critical-600 px-4 py-2 text-sm font-semibold text-white hover:bg-critical-700"
+              >
+                📞 Call 112 — Emergency
+              </a>
+            ) : null}
+            <a
+              href="tel:+256417103100"
+              className="inline-flex items-center gap-2 rounded-lg border border-critical-300 bg-white px-4 py-2 text-sm font-semibold text-critical-700 hover:bg-critical-50"
+            >
+              📞 Call KCCA Helpline
+            </a>
+          </div>
         </div>
       ) : null}
 
