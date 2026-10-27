@@ -3,9 +3,10 @@ import type { Severity } from "./types";
 export const MAP_STYLE_URL =
   process.env.NEXT_PUBLIC_MAP_STYLE_URL || "https://tiles.openfreemap.org/styles/liberty";
 
+// Expanded to cover Kampala, Nkozi/UMU (~72 km SW of Kampala), and surrounding areas.
 export const KAMPALA_BOUNDS: [[number, number], [number, number]] = [
-  [32.2, 0.05],
-  [32.95, 0.75],
+  [31.7, -0.35],  // SW: covers Nkozi (32.00°E, 0.01°N) with margin
+  [33.1, 0.85],   // NE: covers full greater Kampala area
 ];
 
 export const SEVERITY_COLOURS: Record<Severity, string> = {
