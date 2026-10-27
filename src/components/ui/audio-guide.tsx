@@ -101,38 +101,30 @@ export function AudioGuide({
   function toggleMuted() {
     const next = !muted;
     writeMuted(next);
-    if (next) window.speechSynthesis.cancel();
-  }
-
-  function playNow() {
-    if (muted) return;
-    speak(text, language);
+    if (next) {
+      window.speechSynthesis.cancel();
+    } else {
+      speak(text, language);
+    }
   }
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <button
-        type="button"
-        onClick={playNow}
-        disabled={muted}
-        aria-label="Play audio guide"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 bg-white text-brand-600 shadow-sm transition-colors hover:bg-brand-50 disabled:pointer-events-none disabled:opacity-50"
-      >
+    <button
+      type="button"
+      onClick={toggleMuted}
+      aria-pressed={muted}
+      aria-label={muted ? "Unmute and play audio guide" : "Mute audio guide"}
+      className={cn(
+        "flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 bg-white shadow-sm transition-colors hover:bg-brand-50",
+        muted ? "text-ink-500" : "text-brand-600",
+        className,
+      )}
+    >
+      {muted ? (
+        <VolumeX className="h-4 w-4" aria-hidden="true" />
+      ) : (
         <Volume2 className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        onClick={toggleMuted}
-        aria-pressed={muted}
-        aria-label={muted ? "Unmute audio guide" : "Mute audio guide"}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-500 shadow-sm transition-colors hover:bg-ink-50"
-      >
-        {muted ? (
-          <VolumeX className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <Volume2 className="h-4 w-4" aria-hidden="true" />
-        )}
-      </button>
-    </div>
+      )}
+    </button>
   );
 }

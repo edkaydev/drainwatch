@@ -43,7 +43,7 @@ function writeStoredLanguage(next: Language) {
 type LanguageContextValue = {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -55,7 +55,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     writeStoredLanguage(next);
   }, []);
 
-  const t = useCallback((key: string) => translate(language, key), [language]);
+  const t = useCallback(
+    (key: string, vars?: Record<string, string | number>) => {
+      const template = translate(language, key);
+      if (!vars) return template;
+      return Object.entries(vars).reduce(
+        (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+        template,
+      );
+    },
+    [language],
+  );
 
   const value = useMemo<LanguageContextValue>(
     () => ({ language, setLanguage, t }),
