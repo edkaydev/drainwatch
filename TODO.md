@@ -1,6 +1,67 @@
 # DrainWatch AI — Implementation Status
 
-Last updated: 2026-10-26
+Last updated: 2026-10-27
+
+---
+
+## 🏆 Hackathon Sprint — DevFest Kampala 2026
+
+Tasks to complete before judging. Work through these in order.
+
+### 🔴 Deployment (must have a live URL)
+- [ ] Deploy `firestore.rules`, `firestore.indexes.json` via `firebase deploy --only firestore:rules,firestore:indexes`
+- [ ] Push code to GitHub
+- [ ] Import repo into Vercel and add all environment variables
+- [ ] Add Vercel deployment URL to Firebase Auth → Authorized Domains
+- [ ] Add Gemini API key to Vercel environment variables
+- [ ] Verify the live site loads at the Vercel URL
+- [ ] Add 3 staff `staff/{uid}` Firestore documents with `active: true` for each team member UID
+
+### 🟠 Demo data (map must not be empty)
+- [ ] Write and run a seed script that inserts 15 realistic incidents:
+  - 10 in Kampala flood-prone areas (Bwaise, Kamwokya, Natete, Nakivubo)
+  - 5 in Nkozi/UMU campus area
+  - Mix of severities: low, medium, high, critical
+  - Mix of statuses: new, triaged, in_progress, resolved
+- [ ] Confirm incidents appear on the public `/map` with hotspot clusters
+
+### 🟡 Multilingual support (SDG Impact + Use of Google Tools score)
+- [x] Create `src/lib/i18n.ts` — translations for English, Luganda, Swahili
+      (Runyankole not implemented — not in scope of the i18n task actually run)
+- [x] Create `src/components/layout/language-provider.tsx` — React context
+- [x] Add language switcher to navbar (EN | LG | SW, no flags/RK), persists to
+      `localStorage` under `drainwatch:lang`
+- [x] Wire translations into report form (step labels, fields, buttons, errors,
+      success)
+- [ ] Wire translations into landing page hero and nav links
+
+### 🟡 ATM-style audio guidance (accessibility + SDG Impact score)
+- [x] Build `src/components/ui/audio-guide.tsx` — speaker button using browser
+      SpeechSynthesis API, hidden when unsupported
+- [x] Write audio scripts for each step in English, Luganda, and Swahili
+      (Runyankole not implemented):
+  - Step 1 (Details): describe the hazard, choose type and severity
+  - Step 2 (Location): tap the map or use GPS button
+  - Step 3 (Review): check your report, listen to AI result, then submit
+- [x] Mount AudioGuide on each step of the report form and the success panel
+- [x] Auto-play when step changes; mute/unmute toggle persists to
+      `localStorage` under `drainwatch:muted`
+
+### 🟡 Photo-first AI classification (for users who cannot write)
+- [x] Update `/api/classify` to accept a base64 image and send it to Gemini
+      Vision (`inline_data` part, two-tier body size limit for photo uploads)
+- [x] Trigger classification automatically when the first photo is uploaded on
+      Step 1
+- [x] Make description field optional when a photo is provided
+- [x] Show AI result (category, severity, summary) immediately after photo
+      upload (falls back to the rule-based classifier if Gemini is unavailable)
+
+### 🟢 Pitch preparation
+- [ ] Write 3-minute pitch script: Problem → Solution → Demo → Next step
+- [ ] Record a screen-capture backup of the full demo flow (in case of live internet issues)
+- [ ] Prepare one slide with the hotspot score breakdown table for the judging Q&A
+
+---
 
 ## Verified in this environment
 
