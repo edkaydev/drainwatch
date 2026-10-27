@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { PhotoUploader, type PhotoItem } from "./photo-uploader";
 import { SupportRequestCard } from "./support-request-card";
+import { LanguageGate } from "./language-gate";
 import { LocationPicker } from "@/components/map/location-picker";
 import { Card } from "@/components/ui/card";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -115,7 +116,7 @@ function fileToBase64(file: File): Promise<string> {
 
 export function ReportForm() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, languageChosen } = useLanguage();
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<ReportDraft>(makeEmptyDraft);
   const [errors, setErrors] = useState<ReportErrors>({});
@@ -439,6 +440,9 @@ export function ReportForm() {
     return <SuccessPanel incidentId={successId} ai={successAi} onReset={resetForm} />;
   }
 
+  if (!languageChosen) {
+    return <LanguageGate onChoose={() => {}} />;
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
@@ -522,7 +526,7 @@ export function ReportForm() {
               />
             ) : null}
 
-            <div className="mt-8 flex flex-col-reverse gap-3 border-t border-ink-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-8 flex items-center justify-between gap-3 border-t border-ink-100 pt-5">
               <div>
                 {step > 1 ? (
                   <Button

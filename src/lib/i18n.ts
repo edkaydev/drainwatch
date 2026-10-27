@@ -204,6 +204,9 @@ const en = {
   "report.support.sending": "Sending…",
   "report.support.success": "Message sent. A staff member will follow up soon.",
   "report.support.error": "Could not send your message. Try again or use the contact options above.",
+
+  "report.languageGate.title": "Choose your language",
+  "report.languageGate.subtitle": "Select the language you want to use for this report.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -393,6 +396,9 @@ const lg: Record<TranslationKey, string> = {
   "report.support.sending": "Nsindika…",
   "report.support.success": "Obubaka butumiddwa. Omukozi ajja kukutuukirira mangu.",
   "report.support.error": "Tetusobodde kusindika bubaka bwo. Ddamu ogezeeko, oba kozesa endala eziri waggulu.",
+
+  "report.languageGate.title": "Londa Olulimi Lwo",
+  "report.languageGate.subtitle": "Londa olulimi lw'oyagala okukozesa okuwayo lipooti eno.",
 };
 
 const sw: Record<TranslationKey, string> = {
@@ -582,6 +588,9 @@ const sw: Record<TranslationKey, string> = {
   "report.support.sending": "Inatuma…",
   "report.support.success": "Ujumbe umetumwa. Mfanyakazi atafuatilia hivi karibuni.",
   "report.support.error": "Imeshindikana kutuma ujumbe wako. Jaribu tena au tumia njia za mawasiliano hapo juu.",
+
+  "report.languageGate.title": "Chagua Lugha Yako",
+  "report.languageGate.subtitle": "Chagua lugha unayotaka kutumia kwa ripoti hii.",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {

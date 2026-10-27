@@ -26,6 +26,20 @@ function getServerSnapshot(): Language {
   return "en";
 }
 
+// Distinguishes "defaulted to English" from "the visitor actually picked
+// English", so an ATM-style language gate can show exactly once per visitor.
+function readLanguageChosen(): boolean {
+  try {
+    return localStorage.getItem(LANGUAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function getChosenServerSnapshot(): boolean {
+  return false;
+}
+
 function subscribe(onChange: () => void): () => void {
   listeners.add(onChange);
   return () => listeners.delete(onChange);
@@ -42,6 +56,7 @@ function writeStoredLanguage(next: Language) {
 
 type LanguageContextValue = {
   language: Language;
+  languageChosen: boolean;
   setLanguage: (language: Language) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
 };
@@ -50,6 +65,11 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const language = useSyncExternalStore(subscribe, readStoredLanguage, getServerSnapshot);
+  const languageChosen = useSyncExternalStore(
+    subscribe,
+    readLanguageChosen,
+    getChosenServerSnapshot,
+  );
 
   const setLanguage = useCallback((next: Language) => {
     writeStoredLanguage(next);
@@ -68,8 +88,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<LanguageContextValue>(
-    () => ({ language, setLanguage, t }),
-    [language, setLanguage, t],
+    () => ({ language, languageChosen, setLanguage, t }),
+    [language, languageChosen, setLanguage, t],
   );
 
   return <LanguageContext value={value}>{children}</LanguageContext>;
