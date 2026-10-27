@@ -527,8 +527,8 @@ export function IncidentDetailView() {
           <Card className="p-5">
             <h2 className="font-semibold text-teal-900">Update status</h2>
             <p className="mt-0.5 text-xs text-ink-400">
-              Triage, dispatch, and resolve this incident. The workflow moves one
-              stage at a time; resolved reports can be reopened.
+              Move this incident to in progress, then mark it resolved. Resolved
+              reports can be reopened if the hazard returns.
             </p>
 
             <div className="mt-4 space-y-4">
