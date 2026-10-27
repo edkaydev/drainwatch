@@ -22,7 +22,7 @@ export default function ErrorPage({
       id="main-content"
       className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-16 text-center"
     >
-      <Link href="/" aria-label="DrainWatch AI home">
+      <Link href="/" aria-label="DrainWatch home">
         <Logo />
       </Link>
       <span className="mt-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-critical-50 text-critical-600">
