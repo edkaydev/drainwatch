@@ -82,9 +82,9 @@ export function nextStatuses(from: IncidentStatus): IncidentStatus[] {
   return [...STATUS_TRANSITIONS[from]];
 }
 
-// Midpoint between Kampala (0.3476°N, 32.5825°E) and Nkozi (0.0100°N, 32.0000°E)
-// so the initial map view shows both areas.
-export const KAMPALA_CENTER = { lat: 0.18, lng: 32.29 };
+// Kampala city centre (0.3476°N, 32.5825°E) — the default view for the map and
+// the location picker, and the bias point for place searches.
+export const KAMPALA_CENTER = { lat: 0.3476, lng: 32.5825 };
 
 export const KAMPALA_DIVISIONS = [
   "Central",

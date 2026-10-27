@@ -46,7 +46,7 @@ export function LocationPicker({
         container: containerRef.current,
         style: MAP_STYLE_URL,
         center: [start.lng, start.lat],
-        zoom: valueRef.current ? 14 : 10,
+        zoom: valueRef.current ? 14 : 12,
         maxBounds: KAMPALA_BOUNDS,
         attributionControl: false,
       });
@@ -116,6 +116,8 @@ export function LocationPicker({
     const maplibre = maplibreRef.current;
     if (!map || !maplibre) return;
 
+    let moved = false;
+
     if (!markerRef.current) {
       markerRef.current = new maplibre.Marker({ draggable: true })
         .setLngLat([value.lng, value.lat])
@@ -126,6 +128,7 @@ export function LocationPicker({
           onChangeRef.current({ lat: position.lat, lng: position.lng });
         }
       });
+      moved = true;
     } else {
       const current = markerRef.current.getLngLat();
       if (
@@ -133,11 +136,18 @@ export function LocationPicker({
         Math.abs(current.lng - value.lng) > 0.000001
       ) {
         markerRef.current.setLngLat([value.lng, value.lat]);
+        moved = true;
       }
     }
 
-    if (map.getZoom() < 14) {
-      map.flyTo({ center: [value.lng, value.lat], zoom: 14, duration: 600 });
+    // Pan whenever the pin was moved from outside the map (place search,
+    // coordinate inputs, edits) so the chosen location is always in view.
+    if (moved) {
+      map.flyTo({
+        center: [value.lng, value.lat],
+        zoom: Math.max(map.getZoom(), 15),
+        duration: 600,
+      });
     }
   }, [value]);
 

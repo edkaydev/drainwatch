@@ -15,8 +15,12 @@ type PhotonFeature = {
     city?: string;
     state?: string;
     country?: string;
+    countrycode?: string;
   };
 };
+
+// Greater Kampala bounding box: minLng, minLat, maxLng, maxLat.
+const KAMPALA_BBOX = "32.25,0.15,32.9,0.55";
 
 type PhotonResponse = {
   features?: PhotonFeature[];
@@ -51,23 +55,38 @@ export async function searchPlaces(query: string): Promise<GeocodeResult[]> {
     q: trimmed,
     lat: String(KAMPALA_CENTER.lat),
     lon: String(KAMPALA_CENTER.lng),
-    limit: "5",
+    bbox: KAMPALA_BBOX,
+    lang: "en",
+    limit: "8",
   });
 
   try {
     const response = await fetch(`https://photon.komoot.io/api/?${params.toString()}`, {
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) return [];
 
     const data = (await response.json()) as PhotonResponse;
+    const seen = new Set<string>();
+
     return (data.features ?? [])
-      .filter((feature) => Array.isArray(feature.geometry?.coordinates))
+      .filter(
+        (feature) =>
+          Array.isArray(feature.geometry?.coordinates) &&
+          (!feature.properties.countrycode || feature.properties.countrycode === "UG"),
+      )
       .map((feature) => ({
         label: formatLabel(feature.properties),
         lng: feature.geometry.coordinates[0],
         lat: feature.geometry.coordinates[1],
-      }));
+      }))
+      .filter((result) => {
+        const key = `${result.label}@${result.lat.toFixed(5)},${result.lng.toFixed(5)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 5);
   } catch {
     return [];
   }
