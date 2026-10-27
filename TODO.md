@@ -50,11 +50,68 @@ Tasks to complete before judging. Work through these in order.
 ### 🟡 Photo-first AI classification (for users who cannot write)
 - [x] Update `/api/classify` to accept a base64 image and send it to Gemini
       Vision (`inline_data` part, two-tier body size limit for photo uploads)
-- [x] Trigger classification automatically when the first photo is uploaded on
-      Step 1
-- [x] Make description field optional when a photo is provided
+- [x] Trigger classification automatically when a photo is added during Capture
+- [x] Make the typed description optional when a photo is provided
 - [x] Show AI result (category, severity, summary) immediately after photo
       upload (falls back to the rule-based classifier if Gemini is unavailable)
+- [x] Stop persisting uploaded photos: removed `uploadIncidentPhoto` and the
+      Firebase Storage upload step entirely. Photos are compressed in-browser,
+      sent to Gemini for classification only, and discarded — never written to
+      Storage, disk, or Firestore. `createIncident` always receives
+      `photoUrls: []` for new reports (existing dashboard/map code that reads
+      `photoUrls` is untouched, for any legacy seeded incidents)
+
+### 🟡 Voice report transcription (for users who cannot write or type slowly)
+- [x] Add `/api/transcribe` — sends recorded audio to Gemini (audio `inline_data`
+      part), returns only the transcript; the audio bytes are never written to
+      Firebase Storage, disk, or Firestore — processed in memory and discarded
+      once the response is sent
+- [x] Build `src/components/report/voice-recorder.tsx` — in-browser
+      `MediaRecorder` capture (90s cap), hidden when unsupported
+- [x] Verified server-side against the live Gemini key in `.env.local`: both
+      `audio/wav` and `audio/webm;codecs=opus` (the real MediaRecorder output
+      in Chrome/Firefox) transcribe correctly; a non-speech tone correctly
+      returns "no speech detected" instead of a hallucinated transcript
+- [ ] Have a Luganda speaker review the `report.voice.*` / `report.fields.voice*`
+      / `report.welcome.*` / `report.capture.*` / `report.answer.*` /
+      `report.locationStep.*` / `report.confirmStep.*` strings in
+      `src/lib/i18n.ts` — best-effort draft translations, not verified by a
+      native speaker like the rest of the Luganda copy
+
+### 🟡 Report flow redesign — block-by-block, not a 3-tab wizard
+- [x] Replaced the 3-step tabbed wizard (`report-form.tsx`) with a linear
+      sequence of cards, each with its own Next button: **Welcome → Capture
+      (voice/photo/text) → AI answer → Location → Confirm → Send**. Completed
+      cards don't stay visible — only the current card shows, with a slim
+      progress strip above
+- [x] Category is no longer manually picked — it's always the AI's
+      classification (same as severity already was), removing a step
+- [x] The AI-answer card is its own stage between Capture and Location, shown
+      before Location so the user sees what the AI understood first
+- [x] Dropped the manual "short title" field — the backend already
+      auto-generates a title from the category when left blank
+- [x] Reporter contact fields (name/phone/email) moved to the Confirm card
+      instead of Capture, since they're metadata reviewed at the end
+- [x] `audio-guide.tsx` recordings remapped to the new stages: `welcome` →
+      welcome.mp3, `capture` → report.mp3 (previously unused), `location` →
+      location.mp3, `confirm` → confirm.mp3, `success` → success.mp3
+      (unchanged). The AI-answer card plays no audio — its content is dynamic
+      per report and there are no recordings for arbitrary text (no
+      browser text-to-speech exists anywhere in this app, by design)
+- [x] Home page's "Report by Voice" mic button (`/report?mode=voice`) now
+      lands the user directly on the Capture card instead of Welcome, via
+      `useSearchParams()` + a `<Suspense>` boundary in `report/page.tsx` (not
+      a `window.location` effect, which would have caused a hydration-unsafe
+      double-render)
+- [x] End-to-end smoke-tested with Playwright against the live dev server,
+      live Gemini key, and real Firestore: language select → Welcome → typed
+      description → live AI classification → Answer card → GPS location →
+      Confirm → Send → real incident created and shown on the success panel
+      with a working reference code. No console/page errors during the run
+- [ ] Mic-specific browser flow (permission prompt UI, stop/re-record while
+      recording) was not separately re-verified after the redesign — the
+      underlying `voice-recorder.tsx` component is unchanged from when it was
+      last tested, just remounted on a new card
 
 ### 🟢 Pitch preparation
 - [ ] Write 3-minute pitch script: Problem → Solution → Demo → Next step
@@ -67,7 +124,7 @@ Tasks to complete before judging. Work through these in order.
 
 - [x] `npm run lint`
 - [x] `npm run typecheck` (`next typegen && tsc --noEmit`)
-- [x] `npm test` — 91 tests across 11 files
+- [x] `npm test` — 100 tests across 12 files
 - [x] `npm run build` — all public, dashboard, API, and metadata routes compile
 - [x] `npm audit` — 0 vulnerabilities after the MapLibre 6 and
       `@grpc/grpc-js` upgrade
@@ -92,8 +149,11 @@ Not verified here because there are no Firebase credentials or deployed URL:
       dashboard routes.
 - [x] **Cloud Firestore** — live private incident reads, sanitized public
       projections, status history, and attributed staff actions.
-- [x] **Firebase Storage** — anonymous cover photo, authenticated evidence
-      photos, content/size/filename validation.
+- [x] ~~Firebase Storage~~ — retired. Report photos are sent to Gemini for
+      classification only and never uploaded; the Storage SDK call and the
+      upload helper (`uploadIncidentPhoto`) were removed from the codebase.
+      `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` and `storage.rules` are no longer
+      used by the app and can be dropped from the Firebase project if desired.
 - [x] **Google Maps URLs** — keyless Google Maps and driving-directions handoff
       from incident detail and hotspot cards.
 - [x] **Google Maps JavaScript API** — evaluated and intentionally not adopted;
