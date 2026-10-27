@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  Copy,
   Crosshair,
   FileWarning,
   MapPin,
@@ -991,7 +992,7 @@ function LocationStep({
             {formatCoordinates(point.lat, point.lng)}
           </Badge>
         ) : (
-          <Badge variant="warning">No pin placed yet</Badge>
+          <Badge variant="warning">{t("report.location.noPin")}</Badge>
         )}
       </div>
 
@@ -1042,14 +1043,14 @@ function LocationStep({
         <Field
           label={t("report.fields.division")}
           htmlFor="report-division"
-          hint="Not sure? Choose the closest one."
+          hint={t("report.fields.divisionHint")}
         >
           <Select
             id="report-division"
             value={draft.location.division ?? ""}
             onChange={(event) => onLocationChange({ division: event.target.value })}
           >
-            <option value="">Not sure</option>
+            <option value="">{t("report.fields.notSure")}</option>
             {KAMPALA_DIVISIONS.map((division) => (
               <option key={division} value={division}>
                 {division}
@@ -1061,21 +1062,18 @@ function LocationStep({
         <Field
           label={t("report.fields.landmark")}
           htmlFor="report-address"
-          hint="Optional but very helpful."
+          hint={t("report.fields.landmarkHint")}
         >
           <Input
             id="report-address"
             value={draft.location.address ?? ""}
             onChange={(event) => onLocationChange({ address: event.target.value.slice(0, 200) })}
-            placeholder="e.g. Near Nakawa Market, opposite the taxi stage"
+            placeholder={t("report.fields.landmarkPlaceholder")}
           />
         </Field>
       </div>
 
-      <Alert variant="info">
-        Only reports inside the Kampala service area can be submitted. If the pin
-        is slightly off, drag it rather than leaving it outside the city.
-      </Alert>
+      <Alert variant="info">{t("report.location.serviceArea")}</Alert>
     </div>
   );
 }
@@ -1135,9 +1133,7 @@ function ReviewStep({
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t("report.warning.critical")}
           </p>
-          <p className="text-sm text-critical-700">
-            This report has been assessed as critical severity. If there is immediate danger to life, call emergency services before submitting.
-          </p>
+          <p className="text-sm text-critical-700">{t("report.warning.criticalBody")}</p>
           <div className="flex flex-wrap gap-2">
             <a
               href="tel:112"
@@ -1159,9 +1155,7 @@ function ReviewStep({
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t("report.warning.high")}
           </p>
-          <p className="text-sm text-warning-700">
-            The AI has assessed this as a high severity hazard. Keep bystanders away and submit as soon as it is safe to do so.
-          </p>
+          <p className="text-sm text-warning-700">{t("report.warning.highBody")}</p>
           <a
             href="tel:+256000000000"
             className="inline-flex items-center gap-2 rounded-lg border border-warning-300 bg-white px-4 py-2 text-sm font-semibold text-warning-700 hover:bg-warning-50"
@@ -1176,7 +1170,7 @@ function ReviewStep({
           <div className="flex flex-wrap items-center gap-2">
             {draft.severity ? <SeverityBadge severity={draft.severity} /> : null}
             <Badge variant="neutral">
-              {draft.category ? CATEGORY_LABELS[draft.category] : "Category missing"}
+              {draft.category ? CATEGORY_LABELS[draft.category] : t("report.review.categoryMissing")}
             </Badge>
           </div>
           <button
@@ -1184,13 +1178,13 @@ function ReviewStep({
             onClick={() => onEditStep(1)}
             className="text-xs font-medium text-brand-700 hover:text-brand-800"
           >
-            Edit details
+            {t("report.review.editDetails")}
           </button>
         </div>
         <div className="space-y-4 px-4 py-4">
           <div>
             <p className="text-sm font-medium text-ink-800">
-              {draft.title.trim() || "Title will be generated automatically"}
+              {draft.title.trim() || t("report.review.titleFallback")}
             </p>
             <p className="mt-1 whitespace-pre-line text-sm leading-6 text-ink-600">
               {draft.description}
@@ -1200,7 +1194,7 @@ function ReviewStep({
           <div className="flex flex-wrap items-start justify-between gap-2 border-t border-ink-100 pt-3">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
-                Location
+                {t("report.review.locationLabel")}
               </p>
               <p className="mt-0.5 text-sm text-ink-700">
                 {draft.location.address || draft.location.division || "Kampala"}
@@ -1208,7 +1202,7 @@ function ReviewStep({
               <p className="mt-0.5 font-mono text-xs text-ink-500">
                 {draft.location.lat !== null && draft.location.lng !== null
                   ? formatCoordinates(draft.location.lat, draft.location.lng)
-                  : "No coordinates"}
+                  : t("report.review.noCoordinates")}
               </p>
             </div>
             <button
@@ -1216,17 +1210,17 @@ function ReviewStep({
               onClick={() => onEditStep(2)}
               className="text-xs font-medium text-brand-700 hover:text-brand-800"
             >
-              Edit location
+              {t("report.review.editLocation")}
             </button>
           </div>
 
           <div className="grid gap-3 border-t border-ink-100 pt-3 sm:grid-cols-2">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
-                Reporter
+                {t("report.review.reporterLabel")}
               </p>
               <p className="mt-0.5 text-sm text-ink-700">
-                {draft.reporter.name?.trim() ? draft.reporter.name : "Anonymous reporter"}
+                {draft.reporter.name?.trim() ? draft.reporter.name : t("report.review.anonymous")}
               </p>
               {draft.reporter.phone ? (
                 <p className="text-xs text-ink-500">{draft.reporter.phone}</p>
@@ -1237,16 +1231,16 @@ function ReviewStep({
             </div>
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
-                Photos
+                {t("report.review.photosLabel")}
               </p>
               <p className="mt-0.5 text-sm text-ink-700">
                 {photos.length === 0
-                  ? "No photos"
-                  : `${photos.length} photo${photos.length === 1 ? "" : "s"} ready`}
+                  ? t("report.review.noPhotos")
+                  : photos.length === 1
+                    ? t("report.review.photoReadyOne")
+                    : t("report.review.photoReadyMany", { count: photos.length })}
               </p>
-              <p className="text-xs text-ink-500">
-                The first photo may appear publicly.
-              </p>
+              <p className="text-xs text-ink-500">{t("report.review.photosPublicNote")}</p>
             </div>
           </div>
         </div>
@@ -1260,7 +1254,7 @@ function ReviewStep({
           </h3>
           {ai ? (
             <Badge variant={ai.source === "gemini" ? "info" : "neutral"}>
-              {ai.source === "gemini" ? "Gemini" : "Rule-based fallback"}
+              {ai.source === "gemini" ? "Gemini" : t("report.ai.fallbackSource")}
             </Badge>
           ) : null}
         </div>
@@ -1279,9 +1273,8 @@ function ReviewStep({
             </div>
             <p className="text-sm leading-6 text-ink-700">{ai.summary}</p>
             <p className="text-xs text-ink-500">
-              {Math.round(ai.confidence * 100)}% {t("report.ai.confidence")}. This is advisory; staff
-              will verify it. Submitting does not accept the suggestion
-              automatically.
+              {Math.round(ai.confidence * 100)}% {t("report.ai.confidence")}.{" "}
+              {t("report.review.confidenceNote")}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -1294,7 +1287,7 @@ function ReviewStep({
                 {aiMatches ? (
                   <>
                     <Check className="h-4 w-4" aria-hidden="true" />
-                    Matches your report
+                    {t("report.review.matches")}
                   </>
                 ) : (
                   t("report.buttons.useAISuggestion")
@@ -1312,10 +1305,7 @@ function ReviewStep({
             </div>
           </div>
         ) : (
-          <p className="mt-3 text-sm text-ink-500">
-            No suggestion yet. Continue to submit without one, or re-run the
-            classifier.
-          </p>
+          <p className="mt-3 text-sm text-ink-500">{t("report.review.noSuggestion")}</p>
         )}
 
         {aiNotice ? (
@@ -1324,7 +1314,7 @@ function ReviewStep({
       </div>
 
       {submitError ? (
-        <Alert variant="error" title="Could not submit">
+        <Alert variant="error" title={t("report.errors.submitTitle")}>
           {submitError}
         </Alert>
       ) : null}
@@ -1376,9 +1366,20 @@ function SuccessPanel({
   onReset: () => void;
 }) {
   const { t, language } = useLanguage();
+  const [copied, setCopied] = useState(false);
   const isCritical = ai?.severity === "critical";
   const isHigh = ai?.severity === "high";
   const isUrgent = isCritical || isHigh;
+
+  async function copyReference() {
+    try {
+      await navigator.clipboard.writeText(incidentId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard can be unavailable (e.g. insecure context); ignore silently.
+    }
+  }
 
   const severityColour: Record<string, string> = {
     critical: "border-critical-300 bg-critical-50 text-critical-800",
@@ -1409,16 +1410,22 @@ function SuccessPanel({
         >
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="text-sm font-semibold">AI Assessment</span>
+            <span className="text-sm font-semibold">{t("report.success.aiAssessment")}</span>
             <span className="ml-auto rounded-full border border-current/20 bg-white/60 px-2 py-0.5 text-xs font-medium capitalize">
-              {ai.severity} severity
+              {ai.severity} {t("report.success.severityWord")}
             </span>
           </div>
           <p className="mt-2 text-sm leading-6">{ai.summary}</p>
           <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium opacity-80">
-            <span>Category: {CATEGORY_LABELS[ai.category]}</span>
-            <span>Urgency: {URGENCY_LABELS[ai.urgency]}</span>
-            <span>Confidence: {Math.round(ai.confidence * 100)}%</span>
+            <span>
+              {t("report.success.categoryLabel")}: {CATEGORY_LABELS[ai.category]}
+            </span>
+            <span>
+              {t("report.success.urgencyLabel")}: {URGENCY_LABELS[ai.urgency]}
+            </span>
+            <span>
+              {t("report.success.confidenceLabel")}: {Math.round(ai.confidence * 100)}%
+            </span>
           </div>
         </div>
       ) : null}
@@ -1428,9 +1435,7 @@ function SuccessPanel({
         <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-critical-300 bg-critical-50 p-4 text-left space-y-3">
           <p className="flex items-start gap-2 text-sm font-semibold text-critical-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            {isCritical
-              ? "This looks like a critical hazard. If there is immediate danger to life, call emergency services first."
-              : "This looks like a serious hazard. Keep bystanders away and report to local authorities if needed."}
+            {isCritical ? t("report.success.urgentCritical") : t("report.success.urgentHigh")}
           </p>
           <div className="flex flex-wrap gap-2">
             {isCritical ? (
@@ -1458,6 +1463,24 @@ function SuccessPanel({
         <code className="font-mono text-sm font-semibold text-ink-800">
           {incidentId}
         </code>
+        <button
+          type="button"
+          onClick={copyReference}
+          aria-label={t("report.success.copyAria")}
+          className="flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-2.5 py-1 text-xs font-medium text-ink-600 transition-colors hover:bg-ink-50"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5 text-success-600" aria-hidden="true" />
+              {t("report.success.copied")}
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("report.success.copy")}
+            </>
+          )}
+        </button>
       </div>
 
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -1469,14 +1492,11 @@ function SuccessPanel({
           {t("report.success.another")}
         </Button>
         <LinkButton href="/" variant="ghost">
-          Back to home
+          {t("report.success.backHome")}
         </LinkButton>
       </div>
 
-      <p className="mt-8 text-xs leading-5 text-ink-400">
-        Keep the reference if you need to follow up. Staff may contact you only
-        if you provided contact details.
-      </p>
+      <p className="mt-8 text-xs leading-5 text-ink-400">{t("report.success.footnote")}</p>
     </div>
   );
 }

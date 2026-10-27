@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { ImagePlus, Trash2, UploadCloud } from "lucide-react";
 import { MAX_PHOTOS, MAX_PHOTO_BYTES, ACCEPTED_PHOTO_TYPES } from "@/lib/validation";
+import { useLanguage } from "@/components/layout/language-provider";
 import { cn } from "@/lib/utils";
 
 export type PhotoItem = {
@@ -27,10 +28,12 @@ export function PhotoUploader({
   disabled?: boolean;
   maxPhotos?: number;
 }) {
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
   const atLimit = photos.length >= maxPhotos;
   const blockAdd = Boolean(disabled) || atLimit;
+  const maxSizeMb = Math.round(MAX_PHOTO_BYTES / 1024 / 1024);
 
   return (
     <div>
@@ -70,11 +73,12 @@ export function PhotoUploader({
           <UploadCloud className="h-5 w-5" aria-hidden="true" />
         </span>
         <p className="mt-3 text-sm font-medium text-ink-800">
-          {atLimit ? "Photo limit reached" : "Drop photos here, or browse"}
+          {atLimit ? t("report.photoUploader.limitReached") : t("report.photoUploader.dropOrBrowse")}
         </p>
         <p className="mt-1 text-xs text-ink-400">
-          Up to {maxPhotos} {maxPhotos === 1 ? "photo" : "photos"} · JPEG, PNG,
-          or WebP · max {Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB each
+          {maxPhotos === 1
+            ? t("report.photoUploader.hintOne", { size: maxSizeMb })
+            : t("report.photoUploader.hintMany", { max: maxPhotos, size: maxSizeMb })}
         </p>
         <button
           type="button"
@@ -83,12 +87,9 @@ export function PhotoUploader({
           className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-4 py-2 text-sm font-medium text-ink-800 shadow-sm transition-colors hover:bg-ink-50 disabled:pointer-events-none disabled:opacity-50"
         >
           <ImagePlus className="h-4 w-4" aria-hidden="true" />
-          Choose photos
+          {t("report.photoUploader.choosePhotos")}
         </button>
-        <p className="mt-3 text-[11px] text-ink-400">
-          Photos are resized in your browser before upload. They may appear on
-          the public hotspot map.
-        </p>
+        <p className="mt-3 text-[11px] text-ink-400">{t("report.photoUploader.footerNote")}</p>
       </div>
 
       {error ? (

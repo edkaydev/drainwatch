@@ -10,11 +10,11 @@ import { useLanguage } from "./language-provider";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/#about", label: "About" },
-  { href: "/#insights", label: "Insights" },
-  { href: "/#contact", label: "Contact" },
-];
+  { href: "/", key: "nav.home" },
+  { href: "/#about", key: "nav.about" },
+  { href: "/#insights", key: "nav.insights" },
+  { href: "/#contact", key: "nav.contact" },
+] as const;
 
 function LanguageSwitcher({ className }: { className?: string }) {
   const { language, setLanguage } = useLanguage();
@@ -46,6 +46,7 @@ function LanguageSwitcher({ className }: { className?: string }) {
 }
 
 export function Navbar() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   return (
@@ -62,7 +63,7 @@ export function Navbar() {
               href={link.href}
               className="text-sm font-medium text-ink-700 transition-colors hover:text-teal-900"
             >
-              {link.label}
+              {t(link.key)}
             </Link>
           ))}
           <LanguageSwitcher />
@@ -70,7 +71,7 @@ export function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <LinkButton href="/report" size="sm">
-            Report an Incident
+            {t("nav.report")}
             <ArrowRight className="h-4 w-4" />
           </LinkButton>
         </div>
@@ -96,13 +97,13 @@ export function Navbar() {
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50"
               >
-                {link.label}
+                {t(link.key)}
               </Link>
             ))}
           </nav>
           <LanguageSwitcher className="mt-3 px-3" />
           <LinkButton href="/report" className="mt-4 w-full" onClick={() => setOpen(false)}>
-            Report an Incident
+            {t("nav.report")}
             <ArrowRight className="h-4 w-4" />
           </LinkButton>
         </div>
