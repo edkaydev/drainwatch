@@ -12,11 +12,11 @@ import { Alert, EmptyState, LoadingBlock, Spinner } from "@/components/ui/feedba
 import { usePublicIncidents } from "@/hooks/use-incidents";
 import { computeHotspots, hotspotTone } from "@/lib/hotspots";
 import { MAP_STYLE_URL, KAMPALA_BOUNDS, SEVERITY_COLOURS, loadMapLibre } from "@/lib/map-style";
+import { useLanguage } from "@/components/layout/language-provider";
 import {
   CATEGORY_LABELS,
   KAMPALA_CENTER,
   SEVERITIES,
-  SEVERITY_LABELS,
   STATUS_LABELS,
   type IncidentStatus,
   type PublicIncident,
@@ -32,9 +32,19 @@ const STATUS_TONE: Record<IncidentStatus, "critical" | "warning" | "info" | "suc
   resolved: "success",
 };
 
-function severityFilterLabel(value: "all" | Severity): string {
-  return value === "all" ? "All severities" : SEVERITY_LABELS[value];
-}
+const SEVERITY_KEY: Record<Severity, string> = {
+  low: "severity.low",
+  medium: "severity.medium",
+  high: "severity.high",
+  critical: "severity.critical",
+};
+
+const TONE_KEY: Record<string, string> = {
+  Critical: "mapPage.tone.critical",
+  High: "mapPage.tone.high",
+  Moderate: "mapPage.tone.moderate",
+  Low: "mapPage.tone.low",
+};
 
 function buildFeatures(
   incidents: PublicIncident[],
@@ -87,6 +97,14 @@ function popupElement(incident: PublicIncident): HTMLElement {
 }
 
 export function PublicHotspotMap() {
+  const { t } = useLanguage();
+  // The map-init effect below only runs once on mount, so it reads the
+  // latest translator through a ref instead of depending on `t` directly —
+  // otherwise a language switch would tear down and rebuild the whole map.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   const { data: incidents, loading, error, configured } = usePublicIncidents();
   const [initialFocus] = useState(readInitialFocus);
   const [severity, setSeverity] = useState<"all" | Severity>("all");
@@ -280,7 +298,7 @@ export function PublicHotspotMap() {
 
     initialise().catch(() => {
       if (!cancelled) {
-        setMapError("The interactive map could not load. Use the hotspot list to explore reports.");
+        setMapError(tRef.current("mapPage.mapUnavailableError"));
         setMapFailed(true);
       }
     });
@@ -383,26 +401,22 @@ export function PublicHotspotMap() {
       <div className="max-w-3xl">
         <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700">
           <Radio className="h-3.5 w-3.5" aria-hidden="true" />
-          Public hotspot map
+          {t("mapPage.badge")}
         </span>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-teal-900 sm:text-4xl">
-          Drainage hotspots across Kampala
+          {t("mapPage.title")}
         </h1>
-        <p className="mt-3 text-ink-500">
-          Explore reported hazards and the recurring locations that need
-          attention. Reporter contact details are never shown here.
-        </p>
+        <p className="mt-3 text-ink-500">{t("mapPage.subtitle")}</p>
       </div>
 
       {!configured ? (
-        <Alert variant="warning" title="Map data is not connected" className="mt-6">
-          Firebase environment variables are missing, so no incidents can be
-          loaded. The map and filters remain available for review.
+        <Alert variant="warning" title={t("mapPage.notConnected.title")} className="mt-6">
+          {t("mapPage.notConnected.body")}
         </Alert>
       ) : null}
 
       {error ? (
-        <Alert variant="error" title="Could not load public reports" className="mt-6">
+        <Alert variant="error" title={t("mapPage.loadErrorTitle")} className="mt-6">
           {error}
         </Alert>
       ) : null}
@@ -412,7 +426,7 @@ export function PublicHotspotMap() {
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-ink-500">
               <Filter className="h-3.5 w-3.5" aria-hidden="true" />
-              Severity
+              {t("mapPage.filters.severity")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {(["all", ...SEVERITIES] as const).map((value) => (
@@ -428,7 +442,7 @@ export function PublicHotspotMap() {
                       : "border-ink-200 bg-white text-ink-600 hover:bg-ink-50",
                   )}
                 >
-                  {severityFilterLabel(value)}
+                  {value === "all" ? t("mapPage.filters.allSeverities") : t(SEVERITY_KEY[value])}
                 </button>
               ))}
             </div>
@@ -439,7 +453,7 @@ export function PublicHotspotMap() {
               htmlFor="map-status"
               className="mb-2 block text-xs font-medium text-ink-500"
             >
-              Status
+              {t("mapPage.filters.status")}
             </label>
             <select
               id="map-status"
@@ -447,27 +461,27 @@ export function PublicHotspotMap() {
               onChange={(event) => setStatus(event.target.value as typeof status)}
               className="h-9 rounded-full border border-ink-200 bg-white px-3.5 text-xs font-medium text-ink-700"
             >
-              <option value="active">Active reports</option>
-              <option value="all">All statuses</option>
-              <option value="resolved">Resolved only</option>
+              <option value="active">{t("mapPage.filters.activeReports")}</option>
+              <option value="all">{t("mapPage.filters.allStatuses")}</option>
+              <option value="resolved">{t("mapPage.filters.resolvedOnly")}</option>
             </select>
           </div>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 xl:ml-auto">
             <div>
-              <p className="text-xs text-ink-400">Showing</p>
+              <p className="text-xs text-ink-400">{t("mapPage.stats.showing")}</p>
               <p className="font-semibold text-teal-900">
-                {formatNumber(filteredIncidents.length)} reports
+                {formatNumber(filteredIncidents.length)} {t("mapPage.stats.reportsSuffix")}
               </p>
             </div>
             <div>
-              <p className="text-xs text-ink-400">Active citywide</p>
+              <p className="text-xs text-ink-400">{t("mapPage.stats.activeCitywide")}</p>
               <p className="font-semibold text-teal-900">
                 {formatNumber(activeCount)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-ink-400">Hotspot cells</p>
+              <p className="text-xs text-ink-400">{t("mapPage.stats.hotspotCells")}</p>
               <p className="font-semibold text-teal-900">
                 {formatNumber(filteredHotspots.length)}
               </p>
@@ -495,7 +509,7 @@ export function PublicHotspotMap() {
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-ink-50/80 backdrop-blur-sm">
               <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-ink-600 shadow-sm">
                 <Spinner className="h-4 w-4 text-brand-600" />
-                Loading public reports…
+                {t("mapPage.loadingReports")}
               </div>
             </div>
           ) : null}
@@ -504,15 +518,15 @@ export function PublicHotspotMap() {
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-ink-50/95 p-6">
               <EmptyState
                 icon={MapPinned}
-                title="Map unavailable"
-                description={mapError ?? "The map could not load. The hotspot list still works."}
+                title={t("mapPage.mapUnavailableTitle")}
+                description={mapError ?? t("mapPage.mapUnavailableDefault")}
               />
             </div>
           ) : null}
 
           <div className="pointer-events-none absolute bottom-4 left-4 z-10 rounded-xl bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-400">
-              Severity
+              {t("mapPage.filters.severity")}
             </p>
             <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
               {SEVERITIES.map((value) => (
@@ -521,7 +535,7 @@ export function PublicHotspotMap() {
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: SEVERITY_COLOURS[value] }}
                   />
-                  {SEVERITY_LABELS[value]}
+                  {t(SEVERITY_KEY[value])}
                 </span>
               ))}
             </div>
@@ -534,7 +548,7 @@ export function PublicHotspotMap() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
-                    Selected report
+                    {t("mapPage.selectedReport")}
                   </p>
                   <h2 className="mt-1 font-semibold leading-6 text-teal-900">
                     {selectedIncident.title}
@@ -545,12 +559,12 @@ export function PublicHotspotMap() {
                   onClick={() => setSelectedIncidentId(null)}
                   className="text-xs font-medium text-ink-500 hover:text-teal-900"
                 >
-                  Clear
+                  {t("mapPage.clear")}
                 </button>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Badge variant={severityToBadgeVariant(selectedIncident.severity)}>
-                  {SEVERITY_LABELS[selectedIncident.severity]}
+                  {t(SEVERITY_KEY[selectedIncident.severity])}
                 </Badge>
                 <Badge variant={STATUS_TONE[selectedIncident.status]}>
                   {STATUS_LABELS[selectedIncident.status]}
@@ -559,7 +573,7 @@ export function PublicHotspotMap() {
               </div>
               <dl className="mt-4 space-y-2 text-xs">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-ink-400">Location</dt>
+                  <dt className="text-ink-400">{t("mapPage.location")}</dt>
                   <dd className="text-right font-medium text-ink-700">
                     {selectedIncident.location.address ||
                       selectedIncident.location.division ||
@@ -570,7 +584,7 @@ export function PublicHotspotMap() {
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-ink-400">Reported</dt>
+                  <dt className="text-ink-400">{t("mapPage.reported")}</dt>
                   <dd className="font-medium text-ink-700">
                     {formatRelativeTime(selectedIncident.createdAt)}
                   </dd>
@@ -584,7 +598,7 @@ export function PublicHotspotMap() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
-                    Selected hotspot
+                    {t("mapPage.selectedHotspot")}
                   </p>
                   <h2 className="mt-1 font-semibold text-teal-900">
                     {selectedHotspot.address ||
@@ -597,28 +611,29 @@ export function PublicHotspotMap() {
                   onClick={() => setSelectedHotspotId(null)}
                   className="text-xs font-medium text-ink-500 hover:text-teal-900"
                 >
-                  Clear
+                  {t("mapPage.clear")}
                 </button>
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", hotspotTone(selectedHotspot.score).className)}>
-                  {hotspotTone(selectedHotspot.score).label}
+                  {t(TONE_KEY[hotspotTone(selectedHotspot.score).label])}
                 </span>
                 <span className="text-xs text-ink-500">
-                  Score {selectedHotspot.score}/100
+                  {t("mapPage.score")} {selectedHotspot.score}/100
                 </span>
               </div>
               <p className="mt-3 text-sm text-ink-600">
-                {selectedHotspot.count} report{selectedHotspot.count === 1 ? "" : "s"} ·{" "}
-                {selectedHotspot.activeCount} active ·{" "}
-                {selectedHotspot.resolvedCount} resolved
+                {selectedHotspot.count}{" "}
+                {t(selectedHotspot.count === 1 ? "mapPage.reportWordOne" : "mapPage.reportWordMany")} ·{" "}
+                {selectedHotspot.activeCount} {t("mapPage.active")} ·{" "}
+                {selectedHotspot.resolvedCount} {t("mapPage.resolved")}
               </p>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 {[
-                  { label: "Recurrence", value: selectedHotspot.scoreBreakdown.recurrence, max: 40 },
-                  { label: "Severity", value: selectedHotspot.scoreBreakdown.severity, max: 30 },
-                  { label: "Recency", value: selectedHotspot.scoreBreakdown.recency, max: 20 },
-                  { label: "Active density", value: selectedHotspot.scoreBreakdown.concentration, max: 10 },
+                  { label: t("mapPage.scoreBreakdown.recurrence"), value: selectedHotspot.scoreBreakdown.recurrence, max: 40 },
+                  { label: t("mapPage.scoreBreakdown.severity"), value: selectedHotspot.scoreBreakdown.severity, max: 30 },
+                  { label: t("mapPage.scoreBreakdown.recency"), value: selectedHotspot.scoreBreakdown.recency, max: 20 },
+                  { label: t("mapPage.scoreBreakdown.activeDensity"), value: selectedHotspot.scoreBreakdown.concentration, max: 10 },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -637,24 +652,24 @@ export function PublicHotspotMap() {
           <Card className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-ink-100 px-5 py-4">
               <div>
-                <h2 className="font-semibold text-teal-900">Priority hotspots</h2>
+                <h2 className="font-semibold text-teal-900">{t("mapPage.priorityHotspots.title")}</h2>
                 <p className="mt-0.5 text-xs text-ink-500">
-                  Ranked by recurrence, severity, recency, and active report density
+                  {t("mapPage.priorityHotspots.subtitle")}
                 </p>
               </div>
               <MapPinned className="h-4 w-4 text-brand-600" aria-hidden="true" />
             </div>
 
             {loading ? (
-              <LoadingBlock label="Calculating hotspots…" />
+              <LoadingBlock label={t("mapPage.priorityHotspots.calculating")} />
             ) : filteredHotspots.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <SearchX className="mx-auto h-6 w-6 text-ink-300" aria-hidden="true" />
                 <p className="mt-3 text-sm font-medium text-ink-700">
-                  No hotspots match these filters
+                  {t("mapPage.priorityHotspots.noMatch")}
                 </p>
                 <p className="mt-1 text-xs text-ink-500">
-                  Try showing all statuses or severities.
+                  {t("mapPage.priorityHotspots.noMatchHint")}
                 </p>
               </div>
             ) : (
@@ -689,15 +704,17 @@ export function PublicHotspotMap() {
                                 tone.className,
                               )}
                             >
-                              {tone.label}
+                              {t(TONE_KEY[tone.label])}
                             </span>
                           </span>
                           <span className="mt-1 block text-xs text-ink-500">
-                            {hotspot.count} reports · {hotspot.activeCount} active
+                            {hotspot.count} {t("mapPage.stats.reportsSuffix")} ·{" "}
+                            {hotspot.activeCount} {t("mapPage.active")}
                           </span>
                           <span className="mt-0.5 block text-[11px] text-ink-400">
-                            Last report {formatRelativeTime(hotspot.lastReportedAt)} · score{" "}
-                            {hotspot.score}
+                            {t("mapPage.priorityHotspots.lastReport")}{" "}
+                            {formatRelativeTime(hotspot.lastReportedAt)} ·{" "}
+                            {t("mapPage.priorityHotspots.scoreWord")} {hotspot.score}
                           </span>
                         </span>
                       </button>
@@ -712,7 +729,7 @@ export function PublicHotspotMap() {
                 href="/report"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800"
               >
-                Spotted a hazard? Report it
+                {t("mapPage.spottedHazard")}
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
             </div>
