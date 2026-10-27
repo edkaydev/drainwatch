@@ -2,29 +2,15 @@
 
 import { useEffect, useRef, useSyncExternalStore, type RefObject } from "react";
 import { Volume2, VolumeX } from "lucide-react";
-import { translate, type Language } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const MUTED_KEY = "drainwatch:muted";
 
-const SPEECH_LANG: Record<Language, string> = {
-  en: "en-UG",
-  lg: "lg-UG",
-};
+type StepKey = 1 | 2 | 3 | "success";
 
-const STEP_AUDIO_KEY = {
-  1: "report.step1.audio",
-  2: "report.step2.audio",
-  3: "report.step3.audio",
-  success: "report.success.audio",
-} as const;
-
-type StepKey = keyof typeof STEP_AUDIO_KEY;
-
-// Recorded voiceovers take priority over the browser's text-to-speech (which
-// reads Luganda with a robotic English accent). A step without a recording —
-// or step 3 once a dynamic AI summary is appended — falls back to
-// speechSynthesis instead.
+// Recorded voiceovers only — no browser text-to-speech anywhere in the app.
+// A language/step without a recording here just hides the button.
 const RECORDING_FILE: Record<Language, Partial<Record<StepKey, string>>> = {
   en: { 1: "welcome", 2: "location", 3: "confirm", success: "success" },
   lg: { 1: "welcome", 2: "location", 3: "confirm", success: "success" },
@@ -63,92 +49,48 @@ function writeMuted(next: boolean) {
   mutedListeners.forEach((listener) => listener());
 }
 
-function subscribeNone(): () => void {
-  return () => {};
-}
-
-function getSpeechSupported(): boolean {
-  return typeof window !== "undefined" && "speechSynthesis" in window;
-}
-
-function speak(text: string, language: Language) {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = SPEECH_LANG[language];
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
-
-function stopPlayback(audioRef: RefObject<HTMLAudioElement | null>, speechSupported: boolean) {
+function playRecording(audioRef: RefObject<HTMLAudioElement | null>, url: string) {
   audioRef.current?.pause();
-  if (speechSupported) window.speechSynthesis.cancel();
-}
-
-function playGuide(
-  audioRef: RefObject<HTMLAudioElement | null>,
-  url: string | null,
-  text: string,
-  language: Language,
-  speechSupported: boolean,
-) {
-  stopPlayback(audioRef, speechSupported);
-
-  if (url) {
-    const audio = new Audio(url);
-    audioRef.current = audio;
-    audio.play().catch(() => {
-      if (speechSupported) speak(text, language);
-    });
-    return;
-  }
-
-  if (speechSupported) speak(text, language);
+  const audio = new Audio(url);
+  audioRef.current = audio;
+  void audio.play().catch(() => {
+    // Autoplay can be blocked before the first user interaction; the mute
+    // button still lets them start playback manually.
+  });
 }
 
 export function AudioGuide({
   step,
   language,
-  aiSummary,
   className,
 }: {
   step: 1 | 2 | 3 | "success";
   language: Language;
+  /** Kept for callers that still pass it; no longer spoken (TTS was removed). */
   aiSummary?: string;
   className?: string;
 }) {
-  const speechSupported = useSyncExternalStore(
-    subscribeNone,
-    getSpeechSupported,
-    getBooleanServerSnapshot,
-  );
   const muted = useSyncExternalStore(subscribeMuted, readMuted, getBooleanServerSnapshot);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const script = translate(language, STEP_AUDIO_KEY[step]);
-  const hasDynamicSummary = step === 3 && Boolean(aiSummary);
-  const text = hasDynamicSummary
-    ? `${script} ${translate(language, "report.ai.title")}: ${aiSummary}`
-    : script;
-  // A recording can't include the AI's dynamic summary, so that case always
-  // falls back to speechSynthesis even when a recording exists for step 3.
-  const url = hasDynamicSummary ? null : recordingUrl(language, step);
-  const supported = Boolean(url) || speechSupported;
+  const url = recordingUrl(language, step);
 
   useEffect(() => {
-    if (!supported || muted) return;
-    playGuide(audioRef, url, text, language, speechSupported);
+    if (!url || muted) return;
+    playRecording(audioRef, url);
 
-    return () => stopPlayback(audioRef, speechSupported);
-  }, [url, text, language, supported, muted, speechSupported]);
+    return () => audioRef.current?.pause();
+  }, [url, muted]);
 
-  if (!supported) return null;
+  if (!url) return null;
 
   function toggleMuted() {
     const next = !muted;
     writeMuted(next);
     if (next) {
-      stopPlayback(audioRef, speechSupported);
-    } else {
-      playGuide(audioRef, url, text, language, speechSupported);
+      audioRef.current?.pause();
+    } else if (url) {
+      playRecording(audioRef, url);
     }
   }
 

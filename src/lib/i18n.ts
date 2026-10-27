@@ -208,6 +208,14 @@ const en = {
 
   "report.languageGate.title": "Choose your language",
   "report.languageGate.subtitle": "Select the language you want to use for this report.",
+
+  "report.categories.blocked_drain": "Blocked drain or culvert",
+  "report.categories.open_manhole": "Open or damaged manhole",
+  "report.categories.flooding": "Persistent flooding",
+  "report.categories.illegal_dumping": "Waste blocking a channel",
+  "report.categories.erosion": "Erosion or collapsed bank",
+  "report.categories.broken_culvert": "Broken culvert or cover",
+  "report.categories.other": "Other drainage hazard",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -400,6 +408,14 @@ const lg: Record<TranslationKey, string> = {
 
   "report.languageGate.title": "Londa Olulimi Lwo",
   "report.languageGate.subtitle": "Londa olulimi lw'oyagala okukozesa okuwayo lipooti eno.",
+
+  "report.categories.blocked_drain": "Omudumu oguziyiziddwa oba ogwonooneka",
+  "report.categories.open_manhole": "Ekinnya ekigguddwawo oba ekyonooneka",
+  "report.categories.flooding": "Amazzi agabuutikira ebbanga eggwanvu",
+  "report.categories.illegal_dumping": "Enkola y'okusuula eziyiza omudumu",
+  "report.categories.erosion": "Okukendeera kw'ettaka oba olubalama olugudde",
+  "report.categories.broken_culvert": "Omudumu oguyonjeddwa oba ekibikka ekyonooneka",
+  "report.categories.other": "Akabi akalala ak'omudumu",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
