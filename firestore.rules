@@ -29,15 +29,14 @@ service cloud.firestore {
     }
 
     function validStatus(value) {
-      return value in ['new', 'triaged', 'in_progress', 'resolved'];
+      return value in ['new', 'in_progress', 'resolved'];
     }
 
     // Keep the workflow linear. A resolved incident may be reopened, but
     // stages cannot be skipped and incidents cannot move backwards otherwise.
     function validTransition(before, after) {
       return before == after
-        || (before == 'new' && after == 'triaged')
-        || (before == 'triaged' && after == 'in_progress')
+        || (before == 'new' && after == 'in_progress')
         || (before == 'in_progress' && after == 'resolved')
         || (before == 'resolved' && after == 'in_progress');
     }

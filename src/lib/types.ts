@@ -15,7 +15,6 @@ export type Severity = (typeof SEVERITIES)[number];
 
 export const INCIDENT_STATUSES = [
   "new",
-  "triaged",
   "in_progress",
   "resolved",
 ] as const;
@@ -37,7 +36,6 @@ export const SEVERITY_LABELS: Record<Severity, string> = {
 
 export const STATUS_LABELS: Record<IncidentStatus, string> = {
   new: "New",
-  triaged: "Triaged",
   in_progress: "In progress",
   resolved: "Resolved",
 };
@@ -58,9 +56,8 @@ export const SEVERITY_RANK: Record<Severity, number> = {
 
 export const STATUS_RANK: Record<IncidentStatus, number> = {
   new: 0,
-  triaged: 1,
-  in_progress: 2,
-  resolved: 3,
+  in_progress: 1,
+  resolved: 2,
 };
 
 /**
@@ -69,8 +66,7 @@ export const STATUS_RANK: Record<IncidentStatus, number> = {
  * backwards is rejected by both the UI and the Firestore rules.
  */
 export const STATUS_TRANSITIONS: Record<IncidentStatus, readonly IncidentStatus[]> = {
-  new: ["triaged"],
-  triaged: ["in_progress"],
+  new: ["in_progress"],
   in_progress: ["resolved"],
   resolved: ["in_progress"],
 };
