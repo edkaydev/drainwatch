@@ -5,6 +5,9 @@ import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { Logo } from "./logo";
 import { LinkButton } from "@/components/ui/button";
+import { LANGUAGES } from "@/lib/i18n";
+import { useLanguage } from "./language-provider";
+import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -12,6 +15,35 @@ const NAV_LINKS = [
   { href: "/#insights", label: "Insights" },
   { href: "/#contact", label: "Contact" },
 ];
+
+function LanguageSwitcher({ className }: { className?: string }) {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <div className={cn("flex items-center gap-1", className)}>
+      {LANGUAGES.map((option, index) => {
+        const active = language === option.value;
+        return (
+          <span key={option.value} className="flex items-center gap-1">
+            {index > 0 ? <span className="text-ink-300" aria-hidden="true">|</span> : null}
+            <button
+              type="button"
+              onClick={() => setLanguage(option.value)}
+              aria-pressed={active}
+              aria-label={option.label}
+              className={cn(
+                "rounded-md px-1.5 py-1 text-xs uppercase tracking-wide transition-colors",
+                active ? "font-bold text-teal-900" : "font-medium text-ink-500 hover:text-teal-900",
+              )}
+            >
+              {option.value}
+            </button>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -33,6 +65,7 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <LanguageSwitcher />
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -67,6 +100,7 @@ export function Navbar() {
               </Link>
             ))}
           </nav>
+          <LanguageSwitcher className="mt-3 px-3" />
           <LinkButton href="/report" className="mt-4 w-full" onClick={() => setOpen(false)}>
             Report an Incident
             <ArrowRight className="h-4 w-4" />
