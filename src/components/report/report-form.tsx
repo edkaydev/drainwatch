@@ -410,9 +410,17 @@ export function ReportForm() {
     try {
       const incidentId = newIncidentId();
 
+      // A photo-only report can leave the typed description blank. Firestore's
+      // rules require a real description regardless of input method, so fall
+      // back to the AI's own summary — it's already a substantive sentence.
+      const description =
+        draft.description.trim().length >= DESCRIPTION_MIN
+          ? draft.description
+          : ai?.summary ?? draft.description;
+
       await createIncident({
         incidentId,
-        draft,
+        draft: { ...draft, description },
         ai: ai ?? undefined,
         photoUrls: [],
         reporterUid: user?.uid,
