@@ -216,6 +216,55 @@ const en = {
   "report.categories.erosion": "Erosion or collapsed bank",
   "report.categories.broken_culvert": "Broken culvert or cover",
   "report.categories.other": "Other drainage hazard",
+
+  // Landing page
+  "home.hero.title1": "Smarter Drainage.",
+  "home.hero.title2": "Safer Kampala.",
+  "home.hero.subtitle":
+    "AI helps detect blocked drains and flooding, so the city knows where to fix problems first.",
+  "home.hero.cta1": "Report a Problem",
+  "home.hero.cta2": "See the Map",
+  "home.hero.hotspotDetected": "Problem Detected",
+  "home.hero.highRisk": "High Risk",
+
+  "home.feature1.title": "Report a Problem",
+  "home.feature1.desc": "Take a photo and drop a pin — done in three steps.",
+  "home.feature2.title": "See What is Happening",
+  "home.feature2.desc": "Find the worst-affected spots and how often they flood.",
+  "home.feature3.title": "Fix the Right Places First",
+  "home.feature3.desc": "Focus help where it is needed most.",
+  "home.feature4.title": "Build a Safer City",
+  "home.feature4.desc": "A cleaner, safer, more flood-ready Kampala and Nkozi.",
+
+  "home.score1": "How often — how many times the same spot has been reported",
+  "home.score2": "How serious — worse problems get a higher score",
+  "home.score3": "How recent — newer reports count more than old ones",
+  "home.score4": "How active — how many open problems are in the same area",
+
+  "home.about.label": "How it works",
+  "home.about.title": "Turning reports into action",
+  "home.about.body":
+    "DrainWatch turns community reports into a clear score that shows city teams which drains to fix first — saving time and protecting lives.",
+  "home.about.photoCaption":
+    "Every report starts with someone on the ground — a photo, a location, and a few words.",
+
+  "home.map.label": "Live map",
+  "home.map.title": "See drainage problems across Kampala and Nkozi",
+  "home.map.body": "View reported problems, find the worst spots, and track what is being fixed.",
+  "home.map.cta": "Open Map",
+
+  "home.contact.title": "Want to use DrainWatch in your area?",
+  "home.contact.body": "Get in touch and we will show you how it works.",
+  "home.contact.cta": "Contact us",
+
+  "footer.tagline":
+    "AI helps spot drainage problems so Kampala can fix them faster and stay safer from floods.",
+  "footer.product": "Product",
+  "footer.project": "Project",
+  "footer.links.map": "Hotspot Map",
+  "footer.links.dashboard": "Operations Dashboard",
+  "footer.copyright":
+    "© 2026 DrainWatch AI — a hackathon project for Kampala, Uganda. Demo data is clearly labeled and does not represent real-world outcomes.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -416,6 +465,55 @@ const lg: Record<TranslationKey, string> = {
   "report.categories.erosion": "Okukendeera kw'ettaka oba olubalama olugudde",
   "report.categories.broken_culvert": "Omudumu oguyonjeddwa oba ekibikka ekyonooneka",
   "report.categories.other": "Akabi akalala ak'omudumu",
+
+  // Oluggya — ekifo eky'oluyimba
+  "home.hero.title1": "Emidumu Egya Ngeri.",
+  "home.hero.title2": "Kampala Eya Mbeera.",
+  "home.hero.subtitle":
+    "AI eyamba okulabirira emidumu egyaziyiziddwa n'amazzi agabuutikira, okwagala ekibuga kitegeere ebifo ebyetaaga okuyambibwa okusooka.",
+  "home.hero.cta1": "Wayo Akabi",
+  "home.hero.cta2": "Laba Maapu",
+  "home.hero.hotspotDetected": "Akabi Kazunziddwa",
+  "home.hero.highRisk": "Obutaabika Obungi",
+
+  "home.feature1.title": "Wayo Akabi",
+  "home.feature1.desc": "Fotografa era teeka akabonero — ebitendera bisatu.",
+  "home.feature2.title": "Laba Ekigendawo",
+  "home.feature2.desc": "Nonya ebifo ebizibu era emirundi egisinga okubaawo.",
+  "home.feature3.title": "Yambamu Ebifo Ebikyamu Okusooka",
+  "home.feature3.desc": "Tereka obuyambi awo kyetaagisibwa nnyo.",
+  "home.feature4.title": "Sengeka Ekibuga Ekikuumi",
+  "home.feature4.desc": "Kampala ne Nkozi ezikendeera amazzi n'okubeera bulungi.",
+
+  "home.score1": "Emirundi — emirundi emeka eyo ekifo kinnazunzibwako",
+  "home.score2": "Obukuufu — ebizibu ebibi birina amanye amangi",
+  "home.score3": "Obupya — lipooti empya zisinga okubal'amanye",
+  "home.score4": "Obukimu — ebizibu ebimu ebyali mu kifo ekimu",
+
+  "home.about.label": "Engeri ekikola",
+  "home.about.title": "Okkyusa lipooti mu bikolwa",
+  "home.about.body":
+    "DrainWatch ekkyusa lipooti ez'olukale mu amanye amangu agalagira tiimu y'ekibuga emidumu gw'oyinza okusaasula okusooka — okusaasula ebiseera n'okuwonya abantu.",
+  "home.about.photoCaption":
+    "Lipooti buli esooka n'omuntu ku ttaka — ekifaananyi, ekifo, n'ebigambo bimbi.",
+
+  "home.map.label": "Maapu ey'amangu",
+  "home.map.title": "Laba ebizibu by'emidumu mu Kampala ne Nkozi",
+  "home.map.body": "Laba ebizibu ebyawayiddwako lipooti, nonya ebifo ebizibu, era kebera ekiyambibwa.",
+  "home.map.cta": "Ggulawo Maapu",
+
+  "home.contact.title": "Oyagala kukozesa DrainWatch mu kitundu kyo?",
+  "home.contact.body": "Tukwatagane era tujja kukunyonyola engeri ekikola.",
+  "home.contact.cta": "Tukwatagane",
+
+  "footer.tagline":
+    "AI eyamba okuzuula ebizibu by'emidumu olyoke Kampala ekyusibwe mangu era ekuume obulungi okuva ku mazzi agabuutikira.",
+  "footer.product": "Ebiweebwa",
+  "footer.project": "Pulojekiti",
+  "footer.links.map": "Maapu y'Ebizibu",
+  "footer.links.dashboard": "Dashboard y'Abakozi",
+  "footer.copyright":
+    "© 2026 DrainWatch AI — pulojekiti ya hackathon eya Kampala, Uganda. Ebikwata ku kulaga byogerwa era tebikiikirira bivaamu bya mazima.",
 };
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {

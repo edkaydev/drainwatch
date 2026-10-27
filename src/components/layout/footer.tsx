@@ -1,36 +1,37 @@
+"use client";
+
 import Link from "next/link";
 import { Logo } from "./logo";
-
-const COLUMNS = [
-  {
-    title: "Product",
-    links: [
-      { href: "/report", label: "Report an Incident" },
-      { href: "/map", label: "Hotspot Map" },
-      { href: "/dashboard", label: "Operations Dashboard" },
-    ],
-  },
-  {
-    title: "Project",
-    links: [
-      { href: "/#about", label: "About" },
-      { href: "/#insights", label: "Insights" },
-      { href: "/#contact", label: "Contact" },
-    ],
-  },
-];
+import { useLanguage } from "./language-provider";
 
 export function Footer() {
+  const { t } = useLanguage();
+
+  const COLUMNS = [
+    {
+      title: t("footer.product"),
+      links: [
+        { href: "/report", label: t("nav.report") },
+        { href: "/map", label: t("footer.links.map") },
+        { href: "/dashboard", label: t("footer.links.dashboard") },
+      ],
+    },
+    {
+      title: t("footer.project"),
+      links: [
+        { href: "/#about", label: t("nav.about") },
+        { href: "/#insights", label: t("nav.insights") },
+        { href: "/#contact", label: t("nav.contact") },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-ink-100 bg-teal-950 text-teal-100">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
         <div className="max-w-sm">
           <Logo dark />
-          <p className="mt-4 text-sm leading-6 text-teal-300">
-            AI-powered drainage hazard intelligence for a safer, more
-            flood-resilient Kampala. Built for SDG 11 (Sustainable Cities) and
-            SDG 13 (Climate Action).
-          </p>
+          <p className="mt-4 text-sm leading-6 text-teal-300">{t("footer.tagline")}</p>
         </div>
         {COLUMNS.map((col) => (
           <div key={col.title}>
@@ -51,9 +52,7 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-teal-800/60 px-4 py-6 text-center text-xs text-teal-400 sm:px-6 lg:px-8">
-        © 2026 DrainWatch AI — a hackathon project for
-        Kampala, Uganda. Demo data is clearly labeled and does not represent
-        real-world outcomes.
+        {t("footer.copyright")}
       </div>
     </footer>
   );

@@ -79,7 +79,8 @@ export function AudioGuide({
     if (!url || muted) return;
     playRecording(audioRef, url);
 
-    return () => audioRef.current?.pause();
+    const current = audioRef;
+    return () => current.current?.pause();
   }, [url, muted]);
 
   if (!url) return null;
