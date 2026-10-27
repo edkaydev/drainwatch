@@ -86,6 +86,9 @@ const en = {
   "report.location.failed": "Could not get your location. Drop a pin on the map instead.",
   "report.location.serviceArea":
     "Only reports inside the Kampala service area can be submitted. If the pin is slightly off, drag it rather than leaving it outside the city.",
+  "report.location.searchPlaceholder": "Search for a place…",
+  "report.location.searching": "Searching…",
+  "report.location.searchNoResults": "No matches found. Try a different search, or drop a pin manually.",
 
   "report.photos.limitSignedIn": "You can attach up to {max} photos.",
   "report.photos.limitAnonymous":
@@ -264,7 +267,7 @@ const en = {
   "footer.links.map": "Hotspot Map",
   "footer.links.dashboard": "Operations Dashboard",
   "footer.copyright":
-    "© 2026 DrainWatch AI — a hackathon project for Kampala, Uganda. Demo data is clearly labeled and does not represent real-world outcomes.",
+    "© 2026 DrainWatch — a hackathon project for Kampala, Uganda. Demo data is clearly labeled and does not represent real-world outcomes.",
 
   "mapPage.badge": "Public hotspot map",
   "mapPage.title": "Drainage problems across Kampala",
@@ -395,6 +398,9 @@ const lg: Record<TranslationKey, string> = {
   "report.location.failed": "Tetusobodde kufuna kifo kyo. Teeka akabonero ku maapu.",
   "report.location.serviceArea":
     "Lipooti ezisobola okusindikibwa zokka eziri munda mu Kampala. Akabonero bwe kaba katali mu kifo ekituufu, kasembeze.",
+  "report.location.searchPlaceholder": "Nonya ekifo…",
+  "report.location.searching": "Nnoonya…",
+  "report.location.searchNoResults": "Tewali kifo kizuuliddwa. Gezaako okunoonya endala, oba teeka akabonero ku mukono.",
 
   "report.photos.limitSignedIn": "Oyinza okugatta ebifaananyi okutuuka ku {max}.",
   "report.photos.limitAnonymous":
@@ -568,7 +574,7 @@ const lg: Record<TranslationKey, string> = {
   "footer.links.map": "Maapu y'Ebizibu",
   "footer.links.dashboard": "Dashboard y'Abakozi",
   "footer.copyright":
-    "© 2026 DrainWatch AI — pulojekiti ya hackathon eya Kampala, Uganda. Ebikwata ku kulaga byogerwa era tebikiikirira bivaamu bya mazima.",
+    "© 2026 DrainWatch — pulojekiti ya hackathon eya Kampala, Uganda. Ebikwata ku kulaga byogerwa era tebikiikirira bivaamu bya mazima.",
 
   "mapPage.badge": "Maapu y'olukale",
   "mapPage.title": "Ebizibu by'emidumu mu Kampala",
