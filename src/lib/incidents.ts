@@ -14,8 +14,7 @@ import {
   type DocumentData,
   type Unsubscribe,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { getDb, getFirebaseStorage } from "./firebase";
+import { getDb } from "./firebase";
 import {
   canTransitionStatus,
   CATEGORY_LABELS,
@@ -41,6 +40,7 @@ import {
   TITLE_MAX,
   type ClassifyRequest,
   type ReportDraft,
+  type TranscribeRequest,
 } from "./validation";
 
 export type StaffMember = {
@@ -234,40 +234,8 @@ function buildLocation(location: IncidentLocation) {
   return result;
 }
 
-function randomId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 export function newIncidentId(): string {
   return doc(collection(getDb(), "incidents")).id;
-}
-
-export async function uploadIncidentPhoto(
-  incidentId: string,
-  file: File,
-  index: number,
-  allowPrivate = false,
-): Promise<string> {
-  if (index > 0 && !allowPrivate) {
-    throw new Error("Sign in to attach more than one photo.");
-  }
-
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const folder = index === 0 ? "public-incident-photos" : "incident-photos";
-  const storageRef = ref(
-    getFirebaseStorage(),
-    `${folder}/${incidentId}/${Date.now()}-${index}-${randomId()}.${extension}`,
-  );
-
-  await uploadBytes(storageRef, file, {
-    contentType: file.type || "image/jpeg",
-    cacheControl: "public,max-age=31536000,immutable",
-  });
-
-  return getDownloadURL(storageRef);
 }
 
 export async function createIncident(input: {
@@ -553,6 +521,25 @@ export async function requestClassification(
   }
 
   return (await response.json()) as AIClassification;
+}
+
+export async function requestTranscription(input: TranscribeRequest): Promise<string> {
+  const response = await fetch("/api/transcribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  const data = (await response.json().catch(() => ({}))) as {
+    transcript?: string;
+    error?: string;
+  };
+
+  if (!response.ok || typeof data.transcript !== "string") {
+    throw new Error(data.error || "Transcription is unavailable right now.");
+  }
+
+  return data.transcript;
 }
 
 export function incidentToPublic(incident: Incident): PublicIncident {

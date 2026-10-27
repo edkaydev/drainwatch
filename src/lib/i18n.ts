@@ -21,38 +21,32 @@ const en = {
   "report.badge": "Public incident report",
   "report.pageTitle": "Report a drainage hazard",
   "report.pageSubtitle":
-    "Three quick steps. Your phone and email stay private; the location, type of problem, how serious it is, and your first photo may appear on the public map.",
+    "Your phone and email stay private; the location, type of problem, and how serious it is may appear on the public map. Photos and voice recordings are only used by the AI and are never kept.",
 
-  "report.steps.details": "Details",
-  "report.steps.location": "Location",
-  "report.steps.review": "Review",
+  "report.welcome.title": "Let's report this hazard",
+  "report.welcome.subtitle":
+    "Record a voice message, take a photo, or type a description — whatever's easiest. Our AI looks at it and tells our team what's wrong.",
+  "report.welcome.start": "Start",
 
-  "report.step1.title": "What have you found?",
-  "report.step1.subtitle":
-    "Pick the closest category and give us enough detail to act on it.",
-  "report.step2.title": "Where is it?",
-  "report.step2.subtitle":
+  "report.capture.title": "What have you found?",
+  "report.capture.subtitle": "Record a voice message, add a photo, or type below.",
+
+  "report.answer.title": "Here's what we understood",
+  "report.answer.subtitle": "Check this looks right before continuing.",
+  "report.answer.redo": "Doesn't look right? Add more detail",
+
+  "report.locationStep.title": "Where is it?",
+  "report.locationStep.subtitle":
     "Drop a pin on the map, use your current location, or enter the coordinates and a landmark.",
-  "report.step3.title": "Review and submit",
-  "report.step3.subtitle":
-    "Check the details before sending. You can go back to edit any step.",
 
-  "report.step1.audio":
-    "Welcome! Take a photo of the problem, or describe the type of hazard and how severe it is.",
-  "report.step2.audio": "Tap the map where the problem is, or use the GPS button.",
-  "report.step3.audio": "Check your report. Listen to the AI result, then press Submit.",
-  "report.success.audio": "Thank you! Your report has been received and saved.",
+  "report.confirmStep.title": "Review and send",
+  "report.confirmStep.subtitle":
+    "Check everything below, then send your report to our team.",
 
   "report.notConnected.title": "Reporting is not connected",
   "report.notConnected.body":
     "Firebase environment variables are missing, so submissions cannot be saved. The form stays available so the flow can be reviewed.",
 
-  "report.fields.category": "Hazard type",
-  "report.fields.severity": "How severe is it?",
-  "report.fields.title": "Short title",
-  "report.fields.titleHint":
-    "Optional. We will generate one from the category and location if left blank.",
-  "report.fields.titlePlaceholder": "e.g. Blocked culvert flooding Nakawa market road",
   "report.fields.description": "What is happening?",
   "report.fields.descriptionHint":
     "At least {min} characters. Mention landmarks, water flow, and any immediate danger.",
@@ -60,6 +54,20 @@ const en = {
     "Describe the hazard, how long it has been there, and what it is affecting.",
   "report.fields.photos": "Photos (optional)",
   "report.fields.photosHint": "A clear photo helps our team check the problem faster.",
+  "report.fields.voice": "Or describe it by voice (optional)",
+  "report.fields.voiceHint": "Record a short message in English, Luganda, or Swahili. We transcribe it into the description below and never keep the recording.",
+  "report.voice.record": "Record",
+  "report.voice.recordAgain": "Record again",
+  "report.voice.stop": "Stop recording",
+  "report.voice.tapToStop": "Tap to stop",
+  "report.voice.recording": "Recording… {seconds}s",
+  "report.voice.transcribing": "Transcribing your recording…",
+  "report.voice.added": "Added to the description below",
+  "report.voice.hint": "Up to 90 seconds. Not saved after transcription.",
+  "report.voice.micDenied": "Couldn't access the microphone. Check your browser permissions and try again.",
+  "report.voice.empty": "No audio was captured. Try recording again.",
+  "report.voice.unsupportedFormat": "Your browser's recording format isn't supported. Try a different browser.",
+  "report.voice.failed": "Couldn't transcribe that recording. Try again or type your report instead.",
   "report.fields.yourDetails": "Your details (optional)",
   "report.fields.detailsHint":
     "Only our team can see this. It is never shown on the public map. Leave it blank to report without giving your name.",
@@ -90,13 +98,11 @@ const en = {
   "report.location.searching": "Searching…",
   "report.location.searchNoResults": "No matches found. Try a different search, or drop a pin manually.",
 
-  "report.photos.limitSignedIn": "You can attach up to {max} photos.",
-  "report.photos.limitAnonymous":
-    "Anonymous reports include one cover photo. Sign in to attach more.",
+  "report.photos.limit": "You can attach up to {max} photos.",
 
   "report.buttons.next": "Continue",
   "report.buttons.back": "Back",
-  "report.buttons.submit": "Submit report",
+  "report.buttons.submit": "Send report",
   "report.buttons.cancel": "Cancel",
   "report.buttons.useMyLocation": "Use my location",
   "report.buttons.locating": "Locating…",
@@ -104,7 +110,7 @@ const en = {
   "report.buttons.useAISuggestion": "Use this suggestion",
 
   "report.consent":
-    "I confirm this report is accurate to the best of my knowledge. I understand that the category, severity, status, location, and first photo may be shown publicly, while my contact details remain private.",
+    "I confirm this report is accurate to the best of my knowledge. I understand that the category, severity, status, and location may be shown publicly, while my contact details remain private.",
   "report.consentError": "Confirm that the report is accurate and may be shown publicly.",
 
   "report.warning.critical": "Very dangerous — act now",
@@ -122,11 +128,6 @@ const en = {
   "report.review.noCoordinates": "No coordinates",
   "report.review.reporterLabel": "Reporter",
   "report.review.anonymous": "Anonymous reporter",
-  "report.review.photosLabel": "Photos",
-  "report.review.noPhotos": "No photos",
-  "report.review.photoReadyOne": "1 photo ready",
-  "report.review.photoReadyMany": "{count} photos ready",
-  "report.review.photosPublicNote": "The first photo may appear publicly.",
   "report.review.noSuggestion":
     "No suggestion yet. Continue to submit without one, or re-run the classifier.",
   "report.review.matches": "Matches your report",
@@ -162,6 +163,7 @@ const en = {
   "report.ai.severity": "Severity",
   "report.ai.urgency": "Urgency",
   "report.ai.analysingPhoto": "Looking at your photo…",
+  "report.ai.analysingVoice": "Reading your voice report…",
   "report.ai.fallbackSource": "Basic check (no AI)",
   "report.ai.fallbackNotice":
     "AI is not available right now. Showing a basic check instead.",
@@ -177,7 +179,6 @@ const en = {
   "report.submit.genericError":
     "The report could not be submitted. Check your connection and try again.",
 
-  "report.upload.photo": "Uploading photo {current} of {total}…",
   "report.upload.saving": "Saving your report…",
   "report.upload.submitting": "Submitting…",
 
@@ -198,7 +199,7 @@ const en = {
     "Up to {max} photos · JPEG, PNG, or WebP · max {size} MB each",
   "report.photoUploader.choosePhotos": "Choose photos",
   "report.photoUploader.footerNote":
-    "Photos are resized in your browser before upload. They may appear on the public hotspot map.",
+    "Photos are only used by the AI to understand the hazard. We never save or publish them.",
 
   "report.support.title": "Message our team",
   "report.support.body":
@@ -227,6 +228,7 @@ const en = {
     "AI helps detect blocked drains and flooding, so the city knows where to fix problems first.",
   "home.hero.cta1": "Report a Problem",
   "home.hero.cta2": "See the Map",
+  "home.hero.cta3": "Report by Voice",
   "home.hero.hotspotDetected": "Problem Detected",
   "home.hero.highRisk": "High Risk",
 
@@ -336,37 +338,32 @@ const lg: Record<TranslationKey, string> = {
 
   "report.badge": "Lipooti y'olukale",
   "report.pageTitle": "Wayo Lipooti ku Akabi k'Omudumu",
+  "report.welcome.title": "Ka tuwe lipooti ku kabi kano",
+  "report.welcome.subtitle":
+    "Rekoda obubaka mu ddoboozi, kuba ekifaananyi, oba wandiika ebikwata ku nsonga — kyonna ekyangu gyoli. AI yaffe ekikebera n'etegeeza abakozi baffe ekizibu.",
+  "report.welcome.start": "Tandika",
+
+  "report.capture.title": "Olabye ki?",
+  "report.capture.subtitle": "Rekoda obubaka mu ddoboozi, gatta ekifaananyi, oba wandiika wansi.",
+
+  "report.answer.title": "Bino bye tutegedde",
+  "report.answer.subtitle": "Kakasa nti bituufu nga tonannyiiza mu maaso.",
+  "report.answer.redo": "Tebituufu? Yongera okunnyonnyola",
+
+  "report.locationStep.title": "Kiri wa?",
+  "report.locationStep.subtitle":
+    "Nyiga awo ku maapu, kozesa GPS, oba wandiika obunnamawanga n'ekifo.",
+
+  "report.confirmStep.title": "Kebera era Osindike",
+  "report.confirmStep.subtitle":
+    "Kebera byonna wansi, olyoke osindike lipooti yo eri abakozi baffe.",
+
   "report.pageSubtitle":
-    "Emitendera esatu egyangu. Ebikukwatako tebiraga ku bantu; ekifo, ekika, obukuufu, embeera, ne ekifaananyi ekisooka biyinza okulabika ku maapu ey'olukale.",
-
-  "report.steps.details": "Ebikwata ku nsonga",
-  "report.steps.location": "Ekifo",
-  "report.steps.review": "Kebera",
-
-  "report.step1.title": "Olabye ki?",
-  "report.step1.subtitle": "Londa ekika ekisinga okutuukana era otuwe ebikwata ku nsonga.",
-  "report.step2.title": "Kiri wa?",
-  "report.step2.subtitle": "Nyiga awo ku maapu, kozesa GPS, oba wandiika obunnamawanga n'ekifo.",
-  "report.step3.title": "Kebera era Osindike",
-  "report.step3.subtitle":
-    "Kebera ebikwata ku lipooti yo nga tonnagisindika. Oyinza okudda emabega okukyusa.",
-
-  "report.step1.audio":
-    "Musubirwamu! Fotografa ensonga oba etegeeza ekika n'obukuufu bw'obutaabika.",
-  "report.step2.audio": "Nyiga awo ku maapu nga otuusa essaala lyo, oba kozesa katono ka GPS.",
-  "report.step3.audio": "Kebera lipooti yo. Wulira ebirowoozo bya AI, olyoke onyige Wasilisa.",
-  "report.success.audio": "Webale nnyo! Lipooti yo yakkiririzibwa era etunzibwa.",
+    "Ebikukwatako tebiraga ku bantu; ekifo, ekika, n'obukuufu biyinza okulabika ku maapu ey'olukale. Ebifaananyi n'amaloboozi bikozesebwa AI yokka era tetubikuuma.",
 
   "report.notConnected.title": "Okuwaayo tekukwataganye",
   "report.notConnected.body":
     "Ebya Firebase tebiragiddwa, lipooti teziyinza kutekebwa. Foomu ekyali awo olyoke ogirabe.",
-
-  "report.fields.category": "Ekika ky'akabi",
-  "report.fields.severity": "Bukuufu ki?",
-  "report.fields.title": "Omutwe omufunze",
-  "report.fields.titleHint":
-    "Si bya wandiika. Tujja kugukola okuva ku kika n'ekifo bw'onoba tolina ky'owandiika.",
-  "report.fields.titlePlaceholder": "e.g. Omudumu oguziyiza enzizi mu Nakawa",
   "report.fields.description": "Kiki ekigenda mu maaso?",
   "report.fields.descriptionHint":
     "Waakiri obubonero {min}. Wogera ku bifo ebimanyiddwa, enzizi, n'obulabe obw'amangu.",
@@ -374,6 +371,20 @@ const lg: Record<TranslationKey, string> = {
     "Nnyonnyola akabi, akaberawo, n'ekyo ke kakosa.",
   "report.fields.photos": "Ebifaananyi (si bya wandiika)",
   "report.fields.photosHint": "Ekifaananyi ekirungi kiyamba abakozi okukakasa akabi mangu.",
+  "report.fields.voice": "Oba n'Eddoboozi (si kya wandiika)",
+  "report.fields.voiceHint": "Yogera obubaka obumpi mu Lungereza, Oluganda, oba Kiswahili. Tukifuula mu bigambo wansi, tetukuuma ddoboozi.",
+  "report.voice.record": "Rekoda",
+  "report.voice.recordAgain": "Rekoda Nate",
+  "report.voice.stop": "Koma",
+  "report.voice.tapToStop": "Nyiga okukoma",
+  "report.voice.recording": "Tukwata eddoboozi… {seconds}s",
+  "report.voice.transcribing": "Tukyusa eddoboozi lyo mu bigambo…",
+  "report.voice.added": "Kyawandiikiddwa mu description wansi",
+  "report.voice.hint": "Ebbanga eritasukka ddakiika emu. Tetukuuma ddoboozi oluvannyuma.",
+  "report.voice.micDenied": "Tetusobodde kutuuka ku maiki. Kebera obuyinza bw'omukutu gwo oguddemu ogezeeko.",
+  "report.voice.empty": "Tewali ddoboozi lyakwatiddwa. Ddamu ogezeeko.",
+  "report.voice.unsupportedFormat": "Omukutu gwo tegukkiriza enkola eno. Gezaako omukutu omulala.",
+  "report.voice.failed": "Tetusobodde kukyusa ddoboozi mu bigambo. Ddamu ogezeeko oba wandiika ripoota yo.",
   "report.fields.yourDetails": "Ebikukwatako (si bya wandiika)",
   "report.fields.detailsHint":
     "Abakozi bokka be bayinza okulaba kino. Tekirabika ku maapu ey'olukale. Kireke nga kikolo bw'oba oyagala kuwayo nga togamba linnya lyo.",
@@ -402,13 +413,11 @@ const lg: Record<TranslationKey, string> = {
   "report.location.searching": "Nnoonya…",
   "report.location.searchNoResults": "Tewali kifo kizuuliddwa. Gezaako okunoonya endala, oba teeka akabonero ku mukono.",
 
-  "report.photos.limitSignedIn": "Oyinza okugatta ebifaananyi okutuuka ku {max}.",
-  "report.photos.limitAnonymous":
-    "Lipooti ez'obutamanyibwa zirina kifaananyi kimu. Yingira okugatta ebirala.",
+  "report.photos.limit": "Oyinza okugatta ebifaananyi okutuuka ku {max}.",
 
   "report.buttons.next": "Genda mu maaso",
   "report.buttons.back": "Ddayo",
-  "report.buttons.submit": "Sindika lipooti",
+  "report.buttons.submit": "Sindika Lipooti",
   "report.buttons.cancel": "Sazaamu",
   "report.buttons.useMyLocation": "Kozesa ekifo kyange",
   "report.buttons.locating": "Nnoonya ekifo…",
@@ -416,7 +425,7 @@ const lg: Record<TranslationKey, string> = {
   "report.buttons.useAISuggestion": "Kozesa magezi ga AI",
 
   "report.consent":
-    "Nkakasa nti lipooti eno ya mazima nga bwe mmanyi. Ntegedde nti ekika, obukuufu, embeera, ekifo, n'ekifaananyi ekisooka biyinza okulabisibwa mu lukale, naye ebikukwatako binaasigala nga tebyaalagibwa.",
+    "Nkakasa nti lipooti eno ya mazima nga bwe mmanyi. Ntegedde nti ekika, obukuufu, embeera, n'ekifo biyinza okulabisibwa mu lukale, naye ebikukwatako binaasigala nga tebyaalagibwa.",
   "report.consentError": "Kakasa nti lipooti ya mazima era nti eyinza okulabika mu lukale.",
 
   "report.warning.critical": "AI eraze akabi ka maanyi",
@@ -434,11 +443,6 @@ const lg: Record<TranslationKey, string> = {
   "report.review.noCoordinates": "Tewali bubonero bwa kifo",
   "report.review.reporterLabel": "Eyawaddeyo",
   "report.review.anonymous": "Eyawaddeyo atamanyiddwa",
-  "report.review.photosLabel": "Ebifaananyi",
-  "report.review.noPhotos": "Tewali bifaananyi",
-  "report.review.photoReadyOne": "Ekifaananyi kimu kiteekeddwateekeddwa",
-  "report.review.photoReadyMany": "Ebifaananyi {count} biteekeddwateekeddwa",
-  "report.review.photosPublicNote": "Ekifaananyi ekisooka kiyinza okulabika mu lukale.",
   "report.review.noSuggestion": "Tewannaba magezi. Genda mu maaso nga tolina, oba ddamu okukola.",
   "report.review.matches": "Ekituukana ne lipooti yo",
   "report.review.confidenceNote":
@@ -472,6 +476,7 @@ const lg: Record<TranslationKey, string> = {
   "report.ai.severity": "Obukuufu",
   "report.ai.urgency": "Bwangu",
   "report.ai.analysingPhoto": "Nkebera ekifaananyi…",
+  "report.ai.analysingVoice": "Nsoma ripoota yo ey'eddoboozi…",
   "report.ai.fallbackSource": "Magezi agatali ga AI",
   "report.ai.fallbackNotice": "Gemini tekolagana kaakano, kyokka tulaze magezi agatali ga AI.",
 
@@ -484,7 +489,6 @@ const lg: Record<TranslationKey, string> = {
     "Lipooti ewaddweyo kaakano okuva ku bbulaawuza eno. Linda eddakiika emu nga tonnaddamu okusindika endala.",
   "report.submit.genericError": "Lipooti tesobodde kusindikibwa. Kebera omukutu gwo oddemu.",
 
-  "report.upload.photo": "Nsindika ekifaananyi {current} ekya {total}…",
   "report.upload.saving": "Nteka lipooti yo…",
   "report.upload.submitting": "Nsindika…",
 
@@ -505,7 +509,7 @@ const lg: Record<TranslationKey, string> = {
     "Okutuuka ku {max} · JPEG, PNG, oba WebP · buli kimu {size} MB",
   "report.photoUploader.choosePhotos": "Londa ebifaananyi",
   "report.photoUploader.footerNote":
-    "Ebifaananyi binyoolebwa mu bbulaawuza yo nga tebinnasindikibwa. Biyinza okulabika ku maapu ey'olukale.",
+    "Ebifaananyi bikozesebwa AI yokka okutegeera akabi. Tetubikuuma wadde okubirambisa.",
 
   "report.support.title": "Tumira tiimu yaffe obubaka",
   "report.support.body":
@@ -534,6 +538,7 @@ const lg: Record<TranslationKey, string> = {
     "AI eyamba okulabirira emidumu egyaziyiziddwa n'amazzi agabuutikira, okwagala ekibuga kitegeere ebifo ebyetaaga okuyambibwa okusooka.",
   "home.hero.cta1": "Wayo Akabi",
   "home.hero.cta2": "Laba Maapu",
+  "home.hero.cta3": "Wayo n'Eddoboozi",
   "home.hero.hotspotDetected": "Akabi Kazunziddwa",
   "home.hero.highRisk": "Obutaabika Obungi",
 
