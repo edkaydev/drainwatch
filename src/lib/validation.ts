@@ -130,7 +130,7 @@ export function validateCoordinates(lat: number | null, lng: number | null): str
     lng < KAMPALA_BOUNDS.minLng ||
     lng > KAMPALA_BOUNDS.maxLng
   ) {
-    return "This location is outside the Kampala service area. Pick a point inside Kampala.";
+    return "This location is outside the Kampala and Nkozi service area. Pick a point inside that area.";
   }
 
   return null;

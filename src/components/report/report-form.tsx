@@ -120,9 +120,8 @@ export function ReportForm() {
   const { user } = useAuth();
   const { t, language, languageChosen } = useLanguage();
   const searchParams = useSearchParams();
-  const [stage, setStage] = useState<Stage>(() =>
-    searchParams.get("mode") === "voice" ? "capture" : "welcome",
-  );
+  const voiceEntry = searchParams.get("mode") === "voice";
+  const [stage, setStage] = useState<Stage>(() => (voiceEntry ? "capture" : "welcome"));
   const [draft, setDraft] = useState<ReportDraft>(makeEmptyDraft);
   const [errors, setErrors] = useState<ReportErrors>({});
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -345,7 +344,7 @@ export function ReportForm() {
     const description = draft.description.trim();
     if (photos.length === 0 && description.length < DESCRIPTION_MIN) {
       setErrors({
-        description: t("report.errors.details"),
+        description: t("report.errors.descriptionTooShort", { min: DESCRIPTION_MIN }),
       });
       return;
     }
@@ -506,6 +505,7 @@ export function ReportForm() {
                   disabled={submitting}
                   aiLoading={aiLoading}
                   aiNotice={aiNotice}
+                  initialMethod={voiceEntry ? "voice" : null}
                   onDraftChange={updateDraft}
                   onAddPhotos={addPhotos}
                   onRemovePhoto={removePhoto}
@@ -748,6 +748,7 @@ function CaptureStage({
   disabled,
   aiLoading,
   aiNotice,
+  initialMethod,
   onDraftChange,
   onAddPhotos,
   onRemovePhoto,
@@ -760,13 +761,14 @@ function CaptureStage({
   disabled: boolean;
   aiLoading: boolean;
   aiNotice: string | null;
+  initialMethod: CaptureMethod;
   onDraftChange: <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => void;
   onAddPhotos: (files: FileList | File[]) => void;
   onRemovePhoto: (id: string) => void;
   onTranscribed: (transcript: string) => void;
 }) {
   const { t, language } = useLanguage();
-  const [method, setMethod] = useState<CaptureMethod>(null);
+  const [method, setMethod] = useState<CaptureMethod>(initialMethod);
 
   const hasVoiceOrText = draft.description.trim().length > 0;
   const hasPhoto = photos.length > 0;
@@ -945,11 +947,7 @@ function AnswerStage({
             <Sparkles className="h-4 w-4" aria-hidden="true" />
             {t("report.ai.title")}
           </h3>
-          {ai ? (
-            <Badge variant={ai.source === "gemini" ? "info" : "neutral"}>
-              {ai.source === "gemini" ? "Gemini" : t("report.ai.fallbackSource")}
-            </Badge>
-          ) : null}
+          {ai ? <Badge variant="neutral">{t("report.ai.badge")}</Badge> : null}
         </div>
 
         {aiLoading ? (
@@ -965,10 +963,7 @@ function AnswerStage({
               <MiniFact label={t("report.ai.urgency")} value={URGENCY_LABELS[ai.urgency]} />
             </div>
             <p className="text-sm leading-6 text-ink-700">{ai.summary}</p>
-            <p className="text-xs text-ink-500">
-              {Math.round(ai.confidence * 100)}% {t("report.ai.confidence")}.{" "}
-              {t("report.review.confidenceNote")}
-            </p>
+            <p className="text-xs text-ink-500">{t("report.review.confidenceNote")}</p>
           </div>
         ) : (
           <p className="mt-3 text-sm text-ink-500">{t("report.review.noSuggestion")}</p>
@@ -1388,9 +1383,6 @@ function SuccessPanel({
             <span>
               {t("report.success.urgencyLabel")}: {URGENCY_LABELS[ai.urgency]}
             </span>
-            <span>
-              {t("report.success.confidenceLabel")}: {Math.round(ai.confidence * 100)}%
-            </span>
           </div>
         </div>
       ) : null}
@@ -1451,11 +1443,7 @@ function SuccessPanel({
       </div>
 
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-        <LinkButton href={`/map?incident=${encodeURIComponent(incidentId)}`}>
-          {t("report.success.viewMap")}
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </LinkButton>
-        <Button type="button" variant="outline" onClick={onReset}>
+        <Button type="button" onClick={onReset}>
           {t("report.success.another")}
         </Button>
         <LinkButton href="/" variant="ghost">
