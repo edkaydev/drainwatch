@@ -22,7 +22,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { SeverityBadge } from "@/components/ui/status-badges";
+import { AudioGuide } from "@/components/ui/audio-guide";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useLanguage } from "@/components/layout/language-provider";
 import { classifyFallback } from "@/lib/classifier";
 import {
   createIncident,
@@ -47,6 +49,7 @@ import {
   MAX_PHOTOS,
   photoError,
   validateDraft,
+  type ImageMimeType,
   type ReportDraft,
   type ReportErrors,
 } from "@/lib/validation";
@@ -91,8 +94,26 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Could not read the photo."));
+        return;
+      }
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = () => reject(new Error("Could not read the photo."));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ReportForm() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<ReportDraft>(makeEmptyDraft);
   const [errors, setErrors] = useState<ReportErrors>({});
@@ -106,6 +127,7 @@ export function ReportForm() {
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [successAi, setSuccessAi] = useState<AIClassification | null>(null);
 
   const [ai, setAi] = useState<AIClassification | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -154,6 +176,34 @@ export function ReportForm() {
     }
   }
 
+  async function classifyFromPhoto(file: File) {
+    setAiLoading(true);
+    setAiNotice(t("report.ai.analysingPhoto"));
+
+    try {
+      const imageBase64 = await fileToBase64(file);
+      const imageMimeType = file.type as ImageMimeType;
+      const result = await requestClassification({
+        description: draft.description || "Photo uploaded",
+        imageBase64,
+        imageMimeType,
+      });
+      setAi(result);
+      setAiNotice(null);
+    } catch {
+      setAi(
+        classifyFallback({
+          description: draft.description || "Photo uploaded",
+          category: draft.category || undefined,
+          severity: draft.severity || undefined,
+        }),
+      );
+      setAiNotice("Gemini is unavailable, so a rule-based suggestion is shown instead.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   function updateDraft<K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
@@ -166,7 +216,7 @@ export function ReportForm() {
   }
 
   function errorsForStep(target: Step): ReportErrors {
-    const all = validateDraft(draft);
+    const all = validateDraft(draft, photos.length > 0);
     const result: ReportErrors = {};
 
     if (target >= 1) {
@@ -205,6 +255,7 @@ export function ReportForm() {
 
   function addPhotos(files: FileList | File[]) {
     const incoming = Array.from(files);
+    const hadNoPhotos = photos.length === 0;
     const next = [...photos];
     const photoLimit = user ? MAX_PHOTOS : 1;
     let message: string | null = null;
@@ -232,6 +283,10 @@ export function ReportForm() {
 
     setPhotos(next);
     setPhotoMessage(message);
+
+    if (hadNoPhotos && next.length > 0) {
+      void classifyFromPhoto(next[0].file);
+    }
   }
 
   function removePhoto(id: string) {
@@ -286,10 +341,10 @@ export function ReportForm() {
     setSubmitError(null);
     setConsentError(null);
 
-    const allErrors = validateDraft(draft);
+    const allErrors = validateDraft(draft, photos.length > 0);
     setErrors(allErrors);
     if (Object.keys(allErrors).length > 0) {
-      setSubmitError("Some details still need attention. Go back and complete the highlighted fields.");
+      setSubmitError(t("report.errors.details"));
       return;
     }
 
@@ -349,6 +404,7 @@ export function ReportForm() {
       }
 
       setSuccessId(incidentId);
+      setSuccessAi(ai);
       setStep(1);
     } catch (cause) {
       setSubmitError(
@@ -372,6 +428,7 @@ export function ReportForm() {
     setConsentError(null);
     setSubmitError(null);
     setSuccessId(null);
+    setSuccessAi(null);
     setStep(1);
     setAi(null);
     setAiNotice(null);
@@ -379,7 +436,7 @@ export function ReportForm() {
   }
 
   if (successId) {
-    return <SuccessPanel incidentId={successId} onReset={resetForm} />;
+    return <SuccessPanel incidentId={successId} ai={successAi} onReset={resetForm} />;
   }
 
 
@@ -391,13 +448,9 @@ export function ReportForm() {
           Public incident report
         </span>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-teal-900 sm:text-4xl">
-          Report a drainage hazard
+          {t("report.pageTitle")}
         </h1>
-        <p className="mt-3 text-ink-500">
-          Three quick steps. Your contact details stay private to staff; the
-          location, category, severity, status, and first photo may appear on the
-          public hotspot map.
-        </p>
+        <p className="mt-3 text-ink-500">{t("report.pageSubtitle")}</p>
       </div>
 
       <div className="mt-8">
@@ -480,7 +533,7 @@ export function ReportForm() {
                     disabled={submitting}
                   >
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                    Back
+                    {t("report.buttons.back")}
                   </Button>
                 ) : (
                   <Link
@@ -488,14 +541,14 @@ export function ReportForm() {
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 hover:text-teal-900"
                   >
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                    Cancel
+                    {t("report.buttons.cancel")}
                   </Link>
                 )}
               </div>
 
               {step < 3 ? (
                 <Button type="submit" disabled={submitting}>
-                  Continue
+                  {t("report.buttons.next")}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
               ) : (
@@ -511,7 +564,7 @@ export function ReportForm() {
                   ) : (
                     <>
                       <Check className="h-4 w-4" aria-hidden="true" />
-                      Submit report
+                      {t("report.buttons.submit")}
                     </>
                   )}
                 </Button>
@@ -642,18 +695,21 @@ function DetailsStep({
   onAddPhotos: (files: FileList | File[]) => void;
   onRemovePhoto: (id: string) => void;
 }) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-teal-900">What have you found?</h2>
-        <p className="mt-0.5 text-sm text-ink-500">
-          Pick the closest category and give us enough detail to act on it.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.step1.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.step1.subtitle")}</p>
+        </div>
+        <AudioGuide step={1} language={language} />
       </div>
 
       <fieldset>
         <legend className="text-sm font-medium text-ink-800">
-          Hazard type <span className="text-critical-500">*</span>
+          {t("report.fields.category")} <span className="text-critical-500">*</span>
         </legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {INCIDENT_CATEGORIES.map((category) => {
@@ -691,7 +747,7 @@ function DetailsStep({
 
       <fieldset>
         <legend className="text-sm font-medium text-ink-800">
-          How severe is it? <span className="text-critical-500">*</span>
+          {t("report.fields.severity")} <span className="text-critical-500">*</span>
         </legend>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {SEVERITIES.map((severity) => {
@@ -736,7 +792,7 @@ function DetailsStep({
       </fieldset>
 
       <Field
-        label="Short title"
+        label={t("report.fields.title")}
         htmlFor="report-title"
         hint="Optional. We will generate one from the category and location if left blank."
         error={errors.title}
@@ -753,7 +809,7 @@ function DetailsStep({
       </Field>
 
       <Field
-        label="What is happening?"
+        label={t("report.fields.description")}
         htmlFor="report-description"
         hint={`At least ${DESCRIPTION_MIN} characters. Mention landmarks, water flow, and any immediate danger.`}
         error={errors.description}
@@ -779,7 +835,7 @@ function DetailsStep({
       </Field>
 
       <div>
-        <h2 className="text-sm font-semibold text-ink-800">Photos (optional)</h2>
+        <h2 className="text-sm font-semibold text-ink-800">{t("report.fields.photos")}</h2>
         <p className="mt-0.5 text-xs text-ink-500">
           A clear photo helps staff verify the hazard faster.
         </p>
@@ -797,14 +853,14 @@ function DetailsStep({
 
       <fieldset className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4">
         <legend className="px-1 text-sm font-semibold text-ink-800">
-          Your details (optional)
+          {t("report.fields.yourDetails")}
         </legend>
         <p className="text-xs leading-5 text-ink-500">
           Only staff can see this. It is never shown on the public map. Leave it
           blank to report anonymously.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <Field label="Name" htmlFor="reporter-name">
+          <Field label={t("report.fields.name")} htmlFor="reporter-name">
             <Input
               id="reporter-name"
               value={draft.reporter.name ?? ""}
@@ -815,7 +871,7 @@ function DetailsStep({
               disabled={disabled}
             />
           </Field>
-          <Field label="Phone" htmlFor="reporter-phone">
+          <Field label={t("report.fields.phone")} htmlFor="reporter-phone">
             <Input
               id="reporter-phone"
               type="tel"
@@ -828,7 +884,7 @@ function DetailsStep({
               disabled={disabled}
             />
           </Field>
-          <Field label="Email" htmlFor="reporter-email" error={errors.reporter}>
+          <Field label={t("report.fields.email")} htmlFor="reporter-email" error={errors.reporter}>
             <Input
               id="reporter-email"
               type="email"
@@ -863,6 +919,7 @@ function LocationStep({
   onLocationChange: (patch: Partial<ReportDraft["location"]>) => void;
   onUseMyLocation: () => void;
 }) {
+  const { t, language } = useLanguage();
   const point =
     draft.location.lat !== null && draft.location.lng !== null
       ? { lat: draft.location.lat, lng: draft.location.lng }
@@ -870,12 +927,12 @@ function LocationStep({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-teal-900">Where is it?</h2>
-        <p className="mt-0.5 text-sm text-ink-500">
-          Drop a pin on the map, use your current location, or enter the
-          coordinates and a landmark.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.step2.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.step2.subtitle")}</p>
+        </div>
+        <AudioGuide step={2} language={language} />
       </div>
 
       <LocationPicker
@@ -894,12 +951,12 @@ function LocationStep({
           {locating ? (
             <>
               <Spinner className="h-4 w-4" />
-              Locating…
+              {t("report.buttons.locating")}
             </>
           ) : (
             <>
               <Crosshair className="h-4 w-4" aria-hidden="true" />
-              Use my location
+              {t("report.buttons.useMyLocation")}
             </>
           )}
         </Button>
@@ -920,13 +977,13 @@ function LocationStep({
       ) : null}
 
       {errors.location ? (
-        <Alert variant="warning" title="Location needed">
+        <Alert variant="warning" title={t("report.errors.location")}>
           {errors.location}
         </Alert>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Latitude" htmlFor="report-lat">
+        <Field label={t("report.fields.latitude")} htmlFor="report-lat">
           <Input
             id="report-lat"
             type="number"
@@ -940,7 +997,7 @@ function LocationStep({
             placeholder="0.3476"
           />
         </Field>
-        <Field label="Longitude" htmlFor="report-lng">
+        <Field label={t("report.fields.longitude")} htmlFor="report-lng">
           <Input
             id="report-lng"
             type="number"
@@ -958,7 +1015,7 @@ function LocationStep({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Division"
+          label={t("report.fields.division")}
           htmlFor="report-division"
           hint="Not sure? Choose the closest one."
         >
@@ -977,7 +1034,7 @@ function LocationStep({
         </Field>
 
         <Field
-          label="Nearest landmark or address"
+          label={t("report.fields.landmark")}
           htmlFor="report-address"
           hint="Optional but very helpful."
         >
@@ -1029,17 +1086,36 @@ function ReviewStep({
   onReclassify: () => void;
   onEditStep: (step: Step) => void;
 }) {
+  const { t, language } = useLanguage();
   const aiMatches =
     ai !== null && ai.category === draft.category && ai.severity === draft.severity;
 
+  const isCritical = ai?.severity === "critical";
+  const isHigh = ai?.severity === "high";
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-teal-900">Review and submit</h2>
-        <p className="mt-0.5 text-sm text-ink-500">
-          Check the details before sending. You can go back to edit any step.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-teal-900">{t("report.step3.title")}</h2>
+          <p className="mt-0.5 text-sm text-ink-500">{t("report.step3.subtitle")}</p>
+        </div>
+        <AudioGuide step={3} language={language} aiSummary={ai?.summary} />
       </div>
+
+      {/* AI severity warning for critical/high — shown before user submits */}
+      {isCritical ? (
+        <Alert variant="error" title={t("report.warning.critical")}>
+          This report has been assessed as critical severity. If there is
+          immediate danger to life, contact emergency services (112) before
+          submitting.
+        </Alert>
+      ) : isHigh ? (
+        <Alert variant="warning" title={t("report.warning.high")}>
+          The AI has assessed this as a high severity hazard. Keep bystanders
+          away and submit as soon as it is safe to do so.
+        </Alert>
+      ) : null}
 
       <div className="rounded-2xl border border-ink-100">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 px-4 py-3">
@@ -1126,7 +1202,7 @@ function ReviewStep({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-teal-900">
             <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
-            AI suggestion
+            {t("report.ai.title")}
           </h3>
           {ai ? (
             <Badge variant={ai.source === "gemini" ? "info" : "neutral"}>
@@ -1138,18 +1214,18 @@ function ReviewStep({
         {aiLoading ? (
           <p className="mt-3 flex items-center gap-2 text-sm text-ink-500">
             <Spinner className="h-4 w-4 text-brand-600" />
-            Analysing the description…
+            {t("report.ai.analysing")}
           </p>
         ) : ai ? (
           <div className="mt-3 space-y-3">
             <div className="grid gap-2 sm:grid-cols-3">
-              <MiniFact label="Category" value={CATEGORY_LABELS[ai.category]} />
-              <MiniFact label="Severity" value={SEVERITY_LABELS[ai.severity]} />
-              <MiniFact label="Urgency" value={URGENCY_LABELS[ai.urgency]} />
+              <MiniFact label={t("report.ai.category")} value={CATEGORY_LABELS[ai.category]} />
+              <MiniFact label={t("report.ai.severity")} value={SEVERITY_LABELS[ai.severity]} />
+              <MiniFact label={t("report.ai.urgency")} value={URGENCY_LABELS[ai.urgency]} />
             </div>
             <p className="text-sm leading-6 text-ink-700">{ai.summary}</p>
             <p className="text-xs text-ink-500">
-              {Math.round(ai.confidence * 100)}% confidence. This is advisory; staff
+              {Math.round(ai.confidence * 100)}% {t("report.ai.confidence")}. This is advisory; staff
               will verify it. Submitting does not accept the suggestion
               automatically.
             </p>
@@ -1167,7 +1243,7 @@ function ReviewStep({
                     Matches your report
                   </>
                 ) : (
-                  "Use this suggestion"
+                  t("report.buttons.useAISuggestion")
                 )}
               </Button>
               <Button
@@ -1177,7 +1253,7 @@ function ReviewStep({
                 onClick={onReclassify}
                 disabled={submitting}
               >
-                Re-run
+                {t("report.buttons.rerun")}
               </Button>
             </div>
           </div>
@@ -1209,11 +1285,7 @@ function ReviewStep({
           aria-invalid={Boolean(consentError)}
           aria-describedby={consentError ? "consent-error" : undefined}
         />
-        <span>
-          I confirm this report is accurate to the best of my knowledge. I
-          understand that the category, severity, status, location, and first
-          photo may be shown publicly, while my contact details remain private.
-        </span>
+        <span>{t("report.consent")}</span>
       </label>
       {consentError ? (
         <p id="consent-error" role="alert" className="-mt-3 text-xs font-medium text-critical-600">
@@ -1242,27 +1314,76 @@ function MiniFact({ label, value }: { label: string; value: string }) {
 
 function SuccessPanel({
   incidentId,
+  ai,
   onReset,
 }: {
   incidentId: string;
+  ai: AIClassification | null;
   onReset: () => void;
 }) {
+  const { t, language } = useLanguage();
+  const isCritical = ai?.severity === "critical";
+  const isHigh = ai?.severity === "high";
+  const isUrgent = isCritical || isHigh;
+
+  const severityColour: Record<string, string> = {
+    critical: "border-critical-300 bg-critical-50 text-critical-800",
+    high: "border-warning-300 bg-warning-50 text-warning-800",
+    medium: "border-info-200 bg-info-50 text-info-800",
+    low: "border-success-200 bg-success-50 text-success-800",
+  };
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:py-24">
-      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success-500">
+      <div className="flex justify-center">
+        <AudioGuide step="success" language={language} />
+      </div>
+      <span className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-50 text-success-500">
         <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
       </span>
       <h1 className="mt-6 text-3xl font-semibold tracking-tight text-teal-900">
-        Report received
+        {t("report.success.title")}
       </h1>
-      <p className="mt-3 text-ink-500">
-        Thank you. The report is saved for staff review and now appears in the
-        operations dashboard.
-      </p>
+      <p className="mt-3 text-ink-500">{t("report.success.body")}</p>
+
+      {/* AI severity result */}
+      {ai ? (
+        <div
+          className={`mx-auto mt-6 max-w-sm rounded-2xl border p-4 text-left ${
+            ai.severity ? severityColour[ai.severity] : "border-ink-200 bg-white"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="text-sm font-semibold">AI Assessment</span>
+            <span className="ml-auto rounded-full border border-current/20 bg-white/60 px-2 py-0.5 text-xs font-medium capitalize">
+              {ai.severity} severity
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-6">{ai.summary}</p>
+          <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium opacity-80">
+            <span>Category: {CATEGORY_LABELS[ai.category]}</span>
+            <span>Urgency: {URGENCY_LABELS[ai.urgency]}</span>
+            <span>Confidence: {Math.round(ai.confidence * 100)}%</span>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Emergency warning for critical/high */}
+      {isUrgent ? (
+        <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-critical-300 bg-critical-50 p-4 text-left">
+          <p className="flex items-start gap-2 text-sm font-semibold text-critical-800">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {isCritical
+              ? "This looks like a critical hazard. If there is immediate danger to life, call emergency services (112) first."
+              : "This looks like a serious hazard. Keep bystanders away and report to local authorities if needed."}
+          </p>
+        </div>
+      ) : null}
 
       <div className="mx-auto mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-ink-200 bg-white px-5 py-3 shadow-sm">
         <span className="text-xs font-medium uppercase tracking-wide text-ink-400">
-          Reference
+          {t("report.success.reference")}
         </span>
         <code className="font-mono text-sm font-semibold text-ink-800">
           {incidentId}
@@ -1271,11 +1392,11 @@ function SuccessPanel({
 
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <LinkButton href={`/map?incident=${encodeURIComponent(incidentId)}`}>
-          View on map
+          {t("report.success.viewMap")}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </LinkButton>
         <Button type="button" variant="outline" onClick={onReset}>
-          Submit another report
+          {t("report.success.another")}
         </Button>
         <LinkButton href="/" variant="ghost">
           Back to home
