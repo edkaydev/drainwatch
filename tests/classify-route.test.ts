@@ -30,11 +30,10 @@ function makeRequest(
 function geminiResponse(classification: unknown): Response {
   return new Response(
     JSON.stringify({
-      candidates: [
+      steps: [
         {
-          content: {
-            parts: [{ text: JSON.stringify(classification) }],
-          },
+          type: "model_output",
+          content: [{ type: "text", text: JSON.stringify(classification) }],
         },
       ],
     }),
@@ -130,7 +129,9 @@ describe("POST /api/classify", () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            candidates: [{ content: { parts: [{ text: "not json" }] } }],
+            steps: [
+              { type: "model_output", content: [{ type: "text", text: "not json" }] },
+            ],
           }),
           { status: 200 },
         ),
