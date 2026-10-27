@@ -1,9 +1,11 @@
-# DrainWatch AI
+# DrainWatch
 
-AI-assisted drainage hazard reporting and hotspot intelligence for Kampala.
-Residents report blocked drains, flooding, open manholes, and related hazards;
-staff triage them from a protected operations dashboard; and a public map shows
-sanitised incident data plus explainable hotspot scores.
+Community-powered drainage hazard reporting and explainable hotspot
+intelligence for Kampala. Residents report blocked drains, flooding, open
+manholes, and related hazards; staff triage them from a protected operations
+dashboard; and a public map shows sanitised incident data plus explainable
+hotspot scores. AI assists with incident classification, but is not the
+product's identity.
 
 ## Features
 

@@ -1,4 +1,4 @@
-# DrainWatch AI — Deployment Runbook
+# DrainWatch — Deployment Runbook
 
 This document covers everything needed outside the repository: Firebase
 services, Google AI, environment variables, Vercel, and production smoke tests.
