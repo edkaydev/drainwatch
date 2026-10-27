@@ -38,10 +38,8 @@ import {
 import { compressPhoto } from "@/lib/images";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import {
-  CATEGORY_LABELS,
   INCIDENT_CATEGORIES,
   KAMPALA_DIVISIONS,
-  SEVERITIES,
   SEVERITY_LABELS,
   URGENCY_LABELS,
   type AIClassification,
@@ -150,6 +148,13 @@ export function ReportForm() {
 
   const aiKeyRef = useRef<string | null>(null);
 
+  // Severity is AI-determined, not user-picked, so every classification
+  // result (Gemini or the rule-based fallback) becomes the draft's severity.
+  function applyAiResult(result: AIClassification) {
+    setAi(result);
+    setDraft((current) => ({ ...current, severity: result.severity }));
+  }
+
   async function runClassification(force = false) {
     const key = `${draft.description}|${draft.category}|${draft.severity}`;
     if (!force && ai && aiKeyRef.current === key) return;
@@ -164,9 +169,9 @@ export function ReportForm() {
         category: draft.category || undefined,
         severity: draft.severity || undefined,
       });
-      setAi(result);
+      applyAiResult(result);
     } catch {
-      setAi(
+      applyAiResult(
         classifyFallback({
           description: draft.description,
           category: draft.category || undefined,
@@ -191,10 +196,10 @@ export function ReportForm() {
         imageBase64,
         imageMimeType,
       });
-      setAi(result);
+      applyAiResult(result);
       setAiNotice(null);
     } catch {
-      setAi(
+      applyAiResult(
         classifyFallback({
           description: draft.description || "Photo uploaded",
           category: draft.category || undefined,
@@ -224,7 +229,6 @@ export function ReportForm() {
 
     if (target >= 1) {
       if (all.category) result.category = all.category;
-      if (all.severity) result.severity = all.severity;
       if (all.title) result.title = all.title;
       if (all.description) result.description = all.description;
       if (all.reporter) result.reporter = all.reporter;
@@ -557,7 +561,7 @@ export function ReportForm() {
               ) : (
                 <Button
                   type="submit"
-                  disabled={submitting || !isFirebaseConfigured}
+                  disabled={submitting || aiLoading || !isFirebaseConfigured}
                 >
                   {submitting ? (
                     <>
@@ -768,7 +772,7 @@ function DetailsStep({
                   className="h-4 w-4 border-ink-300 text-brand-600 focus:ring-brand-500"
                   disabled={disabled}
                 />
-                {category.label}
+                {t(`report.categories.${category.value}`)}
               </label>
             );
           })}
@@ -776,52 +780,6 @@ function DetailsStep({
         {errors.category ? (
           <p role="alert" className="mt-2 text-xs font-medium text-critical-600">
             {errors.category}
-          </p>
-        ) : null}
-      </fieldset>
-
-      <fieldset>
-        <legend className="text-sm font-medium text-ink-800">
-          {t("report.fields.severity")} <span className="text-critical-500">*</span>
-        </legend>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {SEVERITIES.map((severity) => {
-            const selected = draft.severity === severity;
-            const dot = {
-              low: "bg-success-500",
-              medium: "bg-info-500",
-              high: "bg-warning-500",
-              critical: "bg-critical-500",
-            }[severity];
-
-            return (
-              <label
-                key={severity}
-                className={cn(
-                  "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-colors",
-                  selected
-                    ? "border-brand-500 bg-brand-50 text-brand-800"
-                    : "border-ink-200 bg-white text-ink-700 hover:bg-ink-50",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="severity"
-                  value={severity}
-                  checked={selected}
-                  onChange={() => onDraftChange("severity", severity)}
-                  className="sr-only"
-                  disabled={disabled}
-                />
-                <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden="true" />
-                {SEVERITY_LABELS[severity]}
-              </label>
-            );
-          })}
-        </div>
-        {errors.severity ? (
-          <p role="alert" className="mt-2 text-xs font-medium text-critical-600">
-            {errors.severity}
           </p>
         ) : null}
       </fieldset>
@@ -1174,7 +1132,9 @@ function ReviewStep({
           <div className="flex flex-wrap items-center gap-2">
             {draft.severity ? <SeverityBadge severity={draft.severity} /> : null}
             <Badge variant="neutral">
-              {draft.category ? CATEGORY_LABELS[draft.category] : t("report.review.categoryMissing")}
+              {draft.category
+                ? t(`report.categories.${draft.category}`)
+                : t("report.review.categoryMissing")}
             </Badge>
           </div>
           <button
@@ -1271,7 +1231,10 @@ function ReviewStep({
         ) : ai ? (
           <div className="mt-3 space-y-3">
             <div className="grid gap-2 sm:grid-cols-3">
-              <MiniFact label={t("report.ai.category")} value={CATEGORY_LABELS[ai.category]} />
+              <MiniFact
+                label={t("report.ai.category")}
+                value={t(`report.categories.${ai.category}`)}
+              />
               <MiniFact label={t("report.ai.severity")} value={SEVERITY_LABELS[ai.severity]} />
               <MiniFact label={t("report.ai.urgency")} value={URGENCY_LABELS[ai.urgency]} />
             </div>
@@ -1422,7 +1385,7 @@ function SuccessPanel({
           <p className="mt-2 text-sm leading-6">{ai.summary}</p>
           <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium opacity-80">
             <span>
-              {t("report.success.categoryLabel")}: {CATEGORY_LABELS[ai.category]}
+              {t("report.success.categoryLabel")}: {t(`report.categories.${ai.category}`)}
             </span>
             <span>
               {t("report.success.urgencyLabel")}: {URGENCY_LABELS[ai.urgency]}
